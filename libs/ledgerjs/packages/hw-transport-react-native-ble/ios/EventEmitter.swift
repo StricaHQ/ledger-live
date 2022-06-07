@@ -47,6 +47,9 @@ struct ExtraData: Codable {
     
     /// Bulk action extras
     var progress: Double?
+    
+    /// Queue action extras
+    var queueItem: Int?
 }
 
 class EventEmitter {

@@ -10,6 +10,7 @@
     "pod": "cd ios && pod install"
   },
   "dependencies": {
+    "@babel/plugin-transform-named-capturing-groups-regex": "^7.16.8",
     "@ledgerhq/hw-transport-react-native-ble": "workspace:*",
     "@ledgerhq/live-common": "workspace:^",
     "@ledgerhq/logs": "workspace:^",

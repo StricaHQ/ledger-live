@@ -2121,6 +2121,7 @@ importers:
   libs/ledgerjs/packages/hw-transport-react-native-ble/example:
     specifiers:
       '@babel/core': ^7.12.10
+      '@babel/plugin-transform-named-capturing-groups-regex': ^7.16.8
       '@babel/runtime': ^7.12.5
       '@ledgerhq/hw-transport-react-native-ble': workspace:*
       '@ledgerhq/live-common': workspace:^
@@ -2168,6 +2169,7 @@ importers:
       vm-browserify: 1.1.2
       yargs: ^15.3.1
     dependencies:
+      '@babel/plugin-transform-named-capturing-groups-regex': 7.17.10_@babel+core@7.17.10
       '@ledgerhq/hw-transport-react-native-ble': link:..
       '@ledgerhq/live-common': link:../../../../ledger-live-common
       '@ledgerhq/logs': link:../../logs
@@ -31529,7 +31531,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.7.0_sihq2egcoz3xk6sc4vk74xvt4u
+      ts-node: 10.7.0_33lso24kgdvwdhve7eirdtgycu
     transitivePeerDependencies:
       - bufferutil
       - canvas

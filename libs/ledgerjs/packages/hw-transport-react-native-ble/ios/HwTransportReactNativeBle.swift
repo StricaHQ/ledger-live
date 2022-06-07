@@ -7,18 +7,15 @@ import Bluejay
 class HwTransportReactNativeBle: RCTEventEmitter {
     var transport: BleTransport? = nil
     var isConnected: Bool = false
-    var runner: Runner?
+    var runnerTask: Runner?
+    var queueTask: Queue?
     
     @objc override static func requiresMainQueueSetup() -> Bool {
         return false
     }
 
     override init() {
-        let configuration = BleTransportConfiguration(services: [BleService(serviceUUID: "13D63400-2C97-0004-0000-4C6564676572",
-                                                                            notifyUUID: "13d63400-2c97-0004-0001-4c6564676572",
-                                                                            writeWithResponseUUID: "13d63400-2c97-0004-0002-4c6564676572",
-                                                                            writeWithoutResponseUUID: "13d63400-2c97-0004-0003-4c6564676572")])
-        self.transport = BleTransport(configuration: configuration, debugMode: true)
+        self.transport = BleTransport(configuration: nil, debugMode: false)
         super.init()
         EventEmitter.sharedInstance.registerEventEmitter(eventEmitter: self)
     }
@@ -32,7 +29,11 @@ class HwTransportReactNativeBle: RCTEventEmitter {
         )
     }
     
-    private func blackHole (_ : String) -> Void {}
+    private func blackHole (reason : String, lastMessage: String) -> Void {
+        print("blackhole", reason, lastMessage)
+        self.queueTask = nil
+        self.runnerTask = nil
+    }
     
     ///  Since scan seems to be triggered a million times per second, emit only when the size changes
     var lastSeenSize: Int = 0
@@ -97,15 +98,32 @@ class HwTransportReactNativeBle: RCTEventEmitter {
     @objc
     func runner(_ url: String) -> Void {
         if let transport = transport, isConnected {
-            // Try to run a scriptrunner thingie
-            self.runner = Runner(
+            // Try to run a scriptrunner
+            self.runnerTask = Runner(
                 transport,
                 endpoint: URL(string: url)!,
                 onEvent: self.emitFromRunner,
                 onDone: self.blackHole
             )
-            
-            /// Runner apdus need to be handled via events
+        }
+    }
+    
+    @objc(queue:index:)
+    func queue(_ token: String, index: String) -> Void {
+        if self.queueTask != nil{
+            /// We have a queue, update the token and index (maybe to it in one go)
+            self.queueTask?.setIndex(index: Int(index) ?? 0)
+            self.queueTask?.setToken(token: token)
+        }
+        else if let transport = transport, isConnected {
+            // Try to run a scriptrunner queue
+            self.queueTask = Queue(
+                transport,
+                token: token,
+                index: Int(index) ?? 0,
+                onEvent: self.emitFromRunner,
+                onDone: self.blackHole
+            )
         }
     }
     
@@ -155,6 +173,17 @@ class HwTransportReactNativeBle: RCTEventEmitter {
                 })
             }
         }
+        /// Perform some cleanup in case we have some long running tasks going on
+        if self.queueTask != nil {
+            queueTask?.stop()
+            queueTask = nil
+        }
+        
+        if self.runnerTask != nil {
+            runnerTask?.stop()
+            runnerTask = nil
+        }
+        
     }
     
 

@@ -3,7 +3,7 @@ import {
   Platform,
   NativeEventEmitter,
   DeviceEventEmitter,
-} from 'react-native';
+} from "react-native";
 
 export default Platform.select({
   ios: new NativeEventEmitter(NativeModules.HwTransportReactNativeBle),

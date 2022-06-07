@@ -14,27 +14,43 @@ class Runner: NSObject  {
     var endpoint : URL
     
     var onEmit: ((Action, ExtraData?)->Void)?
-    var onDone: ((String)->Void)?
+    var onDone: ((String, String)->Void)?
+    var initialMessage: String = ""
     
     var isRunning: Bool = false
     var isUserBlocked: Bool = false
     var isInBulkMode: Bool = false
+    var pendingOnDone: Bool = false
     var socket: WebSocket?
     
     var HSMNonce: Int = 0               /// HSM uses this nonce to know which frame we are replying to
     var APDUMaxCount: Int = 0
     var APDUQueue: [APDU] = []
     var lastBLEResponse: String = ""
-    
+    var lastScriptRunnerMessage: String = ""
+
+    var stopped: Bool = false
+
     public func setURL(_ url : URL) {
         self.endpoint = url
+    }
+
+    convenience init (
+        _ transport : BleTransport,
+        endpoint : URL,
+        onEvent: @escaping ((Action, ExtraData?)->Void),
+        onDone: ((String, String)->Void)?,
+        withInitialMessage: String
+    ) {
+        self.init(transport, endpoint: endpoint, onEvent: onEvent, onDone: onDone)
+        self.initialMessage = withInitialMessage
     }
     
     public init (
         _ transport : BleTransport,
         endpoint : URL,
         onEvent: @escaping ((Action, ExtraData?)->Void),
-        onDone: ((String)->Void)?
+        onDone: ((String, String)->Void)?
     ) {
         self.transport = transport
         self.endpoint = endpoint
@@ -44,6 +60,11 @@ class Runner: NSObject  {
         
         super.init()
         self.startScriptRunner()
+    }
+    
+    public func stop() {
+        self.stopped = true
+        socket?.disconnect()
     }
     
     /// Based on the apdu in/out we can infer some events that we need to emit up to javascript. Not all exchanges need an event.
@@ -72,12 +93,27 @@ class Runner: NSObject  {
         socket!.connect()
         socket!.onEvent = { event in
             switch event {
-            case .disconnected(let reason, _):
-                self.onDone!(reason)
+            case .connected(_):
+                // In the case of BIM, we should initiate the message exchange
+                if self.initialMessage != "" {
+                    self.socket!.write(string: self.initialMessage)
+                }
                 break
-            case .text(let string):
-                
-                let data = Data(string.utf8)
+            case .disconnected(let reason, _):
+                /// We need to communicate this **only** when have finished the device exchange.
+                /// Never forget that we are a bridge between a backend and the device and even though
+                /// the communication with the backend may over, we may very well still be communicating
+                /// with the device.
+                if !self.isInBulkMode {
+                    self.onDone!(reason, self.lastScriptRunnerMessage)
+                } else {
+                    self.pendingOnDone = true
+                }
+                break
+            case .text(let msg):
+                self.lastScriptRunnerMessage = msg
+                // Receive a message from the scriptrunner
+                let data = Data(msg.utf8)
                 do {
                     if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
                         let query = json["query"] as? String;
@@ -108,10 +144,13 @@ class Runner: NSObject  {
     }
     
     func handleNextAPDU() -> Void {
-        if (!self.APDUQueue.isEmpty) {
+        if !self.APDUQueue.isEmpty && !self.stopped {
             let apdu = self.APDUQueue.removeFirst()
             self.maybeEmitEvent((apdu.data.hexEncodedString()))
             self.transport.exchange(apdu: apdu, callback: self.onDeviceResponse)
+        } else if self.pendingOnDone {
+            /// We don't have pending apdus, and we have gone past a bulk payload, we can emit the disconnect
+            self.onDone!("reason", self.lastScriptRunnerMessage) // TODO not quite right
         }
     }
     

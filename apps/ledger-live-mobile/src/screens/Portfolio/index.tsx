@@ -1,7 +1,8 @@
 /* eslint-disable import/named */
-import React, { useCallback, useMemo, useState, memo } from "react";
+import React, { useEffect, useCallback, useMemo, useState, memo } from "react";
 import { useSelector } from "react-redux";
-import { FlatList, LayoutChangeEvent } from "react-native";
+import { FlatList, LayoutChangeEvent, NativeModules } from "react-native";
+import { Observable } from "rxjs";
 import Animated, {
   useAnimatedScrollHandler,
   useSharedValue,

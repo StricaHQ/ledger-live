@@ -20,10 +20,8 @@ class Ble extends Transport {
 
   id: string;
   appStateSubscription: any;
-  constructor(
-    deviceId: string // TODO to be made a Device
-    // deviceModel: DeviceModel
-  ) {
+
+  constructor(deviceId: string) {
     super();
     this.id = deviceId;
     this.listenToAppStateChanges(); // TODO cleanup chores, keep track of instances
@@ -51,7 +49,7 @@ class Ble extends Transport {
     switch (event) {
       case "status":
         /// Status handling
-        log("ble", type);
+        log("ble-verbose", type);
         switch (type) {
           case "start-scanning":
             Ble.isScanning = true;
@@ -64,15 +62,23 @@ class Ble extends Transport {
       case "task":
         switch (type) {
           case "bulk-progress":
-            log("ble", `bulk-progress ${Math.round(data?.progress)}`);
+            log("ble-verbose", `bulk-progress ${Math.round(data?.progress)}`);
             break;
           default:
-            log("ble", type);
+            log("ble-verbose", type);
             break;
         }
         break;
       case "new-device":
-        Ble.scanObserver.next(data); // Polyfill with device data based on serviceUUID?
+        // TODO clean this up to emit the same expected format from the swift transport (?)
+        Ble.scanObserver?.next({
+          type: "add",
+          descriptor: {
+            id: data.uuid,
+            name: data.name,
+            serviceUUIDs: [data.service],
+          },
+        }); // Polyfill with device data based on serviceUUID?
         break;
     }
   });
@@ -103,10 +109,16 @@ class Ble extends Transport {
   };
 
   /// Attempt to connect to a device
-  static open = async (_uuid: string): Promise<any> => {
-    if (transportsCache[_uuid]) {
-      log("ble-verbose", "Transport in cache, using that.");
-      return transportsCache[_uuid];
+  /// Fix the typings here.
+  static open = async (uuidOrDevice: any): Promise<any> => {
+    /// We can be getting a unique id for the device, or a device object.
+    /// First, extract the id
+    const _uuid =
+      typeof uuidOrDevice === "string" ? uuidOrDevice : uuidOrDevice.id;
+
+    if (await Ble.isConnected()) {
+      log("ble-verbose", "disconnect first");
+      await Ble.disconnect();
     }
 
     log("ble-verbose", `connecting (${_uuid})`);
@@ -136,9 +148,16 @@ class Ble extends Transport {
     return new Promise((f, r) =>
       NativeBle.disconnect(Ble.promisify(f, r))
     ).then((result) => {
+      log("ble-verbose", "disconnected"); // T
       transportsCache = {};
       return result;
     });
+  };
+
+  /// Globally check if we are connected
+  static isConnected = (): Promise<any> => {
+    log("ble-verbose", "check connection"); // Thought about multi devices?
+    return new Promise((f, r) => NativeBle.isConnected(Ble.promisify(f, r)));
   };
 
   /// Exchange an apdu with a device
@@ -150,7 +169,7 @@ class Ble extends Transport {
       NativeBle.exchange(apduString, Ble.promisify(f, r))
     ).then((response) => {
       log("apdu", `<= ${response}`);
-      return response;
+      return Buffer.from("" + response, "hex");
     });
   };
 
@@ -158,6 +177,7 @@ class Ble extends Transport {
   // we promisify them to handle inasync/await pattern instead
   private static promisify = (resolve, reject) => (e, result) => {
     if (e) {
+      Ble.disconnect();
       reject(Ble.mapError(e)); // TODO introduce some error mapping
       return;
     }

@@ -15,7 +15,7 @@ type Props = {
   color?: string,
 };
 
-function HelpLink({ url, style, color = "live" }: Props) {
+function HelpLink({ url, style, color }: Props) {
   const { colors } = useTheme();
   return (
     <Touchable

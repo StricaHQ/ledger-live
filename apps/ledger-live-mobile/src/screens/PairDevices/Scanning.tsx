@@ -9,7 +9,7 @@ import { getInfosForServiceUuid } from "@ledgerhq/devices";
 import logger from "../../logger";
 import { BLE_SCANNING_NOTHING_TIMEOUT } from "../../constants";
 import { knownDevicesSelector } from "../../reducers/ble";
-import TransportBLE from "../../react-native-hw-transport-ble";
+import BluetoothTransport from "@ledgerhq/hw-transport-react-native-ble";
 import { TrackScreen } from "../../analytics";
 import DeviceItem from "../../components/SelectDevice/DeviceItem";
 import ScanningHeader from "./ScanningHeader";
@@ -59,8 +59,7 @@ export default function Scanning({ onTimeout, onError, onSelect }: Props) {
     const timeout = setTimeout(() => {
       onTimeout();
     }, BLE_SCANNING_NOTHING_TIMEOUT);
-
-    const sub = Observable.create(TransportBLE.listen).subscribe({
+    const sub = Observable.create(BluetoothTransport.listen).subscribe({
       next: (e: { type: string; descriptor: any }) => {
         if (e.type === "add") {
           clearTimeout(timeout);
@@ -102,7 +101,6 @@ export default function Scanning({ onTimeout, onError, onSelect }: Props) {
 
 const styles = StyleSheet.create({
   list: {
-    flex: 1,
     paddingHorizontal: 16,
   },
 });

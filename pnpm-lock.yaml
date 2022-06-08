@@ -485,11 +485,11 @@ importers:
       '@ledgerhq/errors': workspace:^
       '@ledgerhq/hw-transport': workspace:^
       '@ledgerhq/hw-transport-http': workspace:^
+      '@ledgerhq/hw-transport-react-native-ble': workspace:*
       '@ledgerhq/live-common': workspace:^
       '@ledgerhq/logs': workspace:^
       '@ledgerhq/native-ui': workspace:^
       '@ledgerhq/react-native-hid': workspace:^
-      '@ledgerhq/react-native-hw-transport-ble': workspace:^
       '@ledgerhq/react-native-passcode-auth': ^2.1.0
       '@polkadot/reactnative-identicon': 2.2.1
       '@polkadot/x-randomvalues': 9.1.1
@@ -683,11 +683,11 @@ importers:
       '@ledgerhq/errors': link:../../libs/ledgerjs/packages/errors
       '@ledgerhq/hw-transport': link:../../libs/ledgerjs/packages/hw-transport
       '@ledgerhq/hw-transport-http': link:../../libs/ledgerjs/packages/hw-transport-http
+      '@ledgerhq/hw-transport-react-native-ble': link:../../libs/ledgerjs/packages/hw-transport-react-native-ble
       '@ledgerhq/live-common': link:../../libs/ledger-live-common
       '@ledgerhq/logs': link:../../libs/ledgerjs/packages/logs
       '@ledgerhq/native-ui': link:../../libs/ui/packages/native
       '@ledgerhq/react-native-hid': link:../../libs/ledgerjs/packages/react-native-hid
-      '@ledgerhq/react-native-hw-transport-ble': link:../../libs/ledgerjs/packages/react-native-hw-transport-ble
       '@ledgerhq/react-native-passcode-auth': 2.1.0
       '@polkadot/reactnative-identicon': 2.2.1_jtrxi44z2zn3egoyupbz6wol6a
       '@polkadot/x-randomvalues': 9.1.1
@@ -19755,7 +19755,7 @@ packages:
       babel-plugin-syntax-jsx: 6.18.0
       lodash: 4.17.21
       picomatch: 2.3.1
-      styled-components: 5.3.5_fane7jikarojcev26y27hpbhu4
+      styled-components: 5.3.5_ovpqj5wn7dv5iunpkty63trwiy
 
   /babel-plugin-syntax-jsx/6.18.0:
     resolution: {integrity: sha1-CvMqmm4Tyno/1QaeYtew9Y0NiUY=}
@@ -24977,7 +24977,7 @@ packages:
     dependencies:
       confusing-browser-globals: 1.0.11
       eslint: 7.32.0
-      eslint-plugin-import: 2.26.0_ffi3uiz42rv3jyhs6cr7p7qqry
+      eslint-plugin-import: 2.26.0_eslint@7.32.0
       object.assign: 4.1.2
       object.entries: 1.1.5
     dev: true
@@ -24994,7 +24994,7 @@ packages:
     dependencies:
       eslint: 7.32.0
       eslint-config-airbnb-base: 14.2.1_hpmu7kn6tcn2vnxpfzvv33bxmy
-      eslint-plugin-import: 2.26.0_ffi3uiz42rv3jyhs6cr7p7qqry
+      eslint-plugin-import: 2.26.0_eslint@7.32.0
       eslint-plugin-jsx-a11y: 6.5.1_eslint@7.32.0
       eslint-plugin-react: 7.29.4_eslint@7.32.0
       eslint-plugin-react-hooks: 4.5.0_eslint@7.32.0
@@ -32342,7 +32342,7 @@ packages:
       jest-resolve:
         optional: true
     dependencies:
-      jest-resolve: 27.5.1
+      jest-resolve: 27.5.1_metro@0.67.0
     dev: true
 
   /jest-pnp-resolver/1.2.2_jest-resolve@28.1.0:
@@ -36422,6 +36422,7 @@ packages:
 
   /moment/2.29.3:
     resolution: {integrity: sha512-c6YRvhEo//6T2Jz/vVtYzqBzwvPT95JBQ+smCytzf7c50oMZRsR/a4w88aD34I+/QVSfnoAnSBFPJHItlOMJVw==}
+    requiresBuild: true
 
   /morgan/1.10.0:
     resolution: {integrity: sha512-AbegBVI4sh6El+1gNwvD5YIck7nSA36weD7xvIxG4in80j/UoK8AEGaWnnz8v1GxonMCltmlNs5ZKbGvl9b1XQ==}
@@ -36537,6 +36538,7 @@ packages:
   /mv/2.1.1:
     resolution: {integrity: sha512-at/ZndSy3xEGJ8i0ygALh8ru9qy7gWW1cmkaqBN29JmMlIvM//MEO9y1sk/avxuwnPcfhkejkLsuPxH81BrkSg==}
     engines: {node: '>=0.8.0'}
+    requiresBuild: true
     dependencies:
       mkdirp: 0.5.6
       ncp: 2.0.0
@@ -44051,7 +44053,6 @@ packages:
       react-is: 17.0.2
       shallowequal: 1.1.0
       supports-color: 5.5.0
-    dev: false
 
   /styled-system/5.1.5:
     resolution: {integrity: sha512-7VoD0o2R3RKzOzPK0jYrVnS8iJdfkKsQJNiLRDjikOpQVqQHns/DXWaPZOH4tIKkhAT7I6wIsy9FWTWh2X3q+A==}

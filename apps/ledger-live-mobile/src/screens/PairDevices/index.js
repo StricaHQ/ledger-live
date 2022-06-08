@@ -1,6 +1,12 @@
 // @flow
-import React, { useReducer, useCallback, useEffect, useRef } from "react";
-import { StyleSheet } from "react-native";
+import React, {
+  useMemo,
+  useReducer,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react";
+import { View, Text, StyleSheet } from "react-native";
 import SafeAreaView from "react-native-safe-area-view";
 import { useDispatch, useSelector } from "react-redux";
 import { timeout, tap } from "rxjs/operators";
@@ -11,8 +17,8 @@ import type { DeviceModelId } from "@ledgerhq/devices";
 import { delay } from "@ledgerhq/live-common/lib/promise";
 import type { Device } from "@ledgerhq/live-common/lib/hw/actions/types";
 import { useTheme } from "@react-navigation/native";
+import BluetoothTransport from "@ledgerhq/hw-transport-react-native-ble";
 import logger from "../../logger";
-import TransportBLE from "../../react-native-hw-transport-ble";
 import { GENUINE_CHECK_TIMEOUT } from "../../constants";
 import { addKnownDevice } from "../../actions/ble";
 import {
@@ -107,12 +113,12 @@ function PairDevicesInner({ navigation, route }: Props) {
       const device = {
         deviceName: bleDevice.name,
         deviceId: bleDevice.id,
-        modelId: "nanoX",
+        modelId: "nanoX", // TODO not necessarily
         wired: false,
       };
       dispatch({ type: "pairing", payload: device });
       try {
-        const transport = await TransportBLE.open(bleDevice);
+        const transport = await BluetoothTransport.open(bleDevice);
         if (unmounted.current) return;
         try {
           const deviceInfo = await getDeviceInfo(transport);
@@ -175,7 +181,7 @@ function PairDevicesInner({ navigation, route }: Props) {
           dispatch({ type: "paired", skipCheck: false });
         } finally {
           transport.close();
-          await TransportBLE.disconnect(device.deviceId).catch(() => {});
+          await BluetoothTransport.disconnect().catch(e_=> {});
           await delay(500);
         }
       } catch (error) {
@@ -220,7 +226,6 @@ function PairDevicesInner({ navigation, route }: Props) {
       />
     );
   }
-
   switch (status) {
     case "scanning":
       return (

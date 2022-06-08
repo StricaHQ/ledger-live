@@ -7,11 +7,11 @@ export default function NavigationScrollView({
   children,
   ...scrollViewProps
 }: ScrollViewProps) {
-  const ref = useRef();
-  useScrollToTop(ref);
+  // const ref = useRef();
+  // useScrollToTop(ref);
 
   return (
-    <ScrollListContainer bg="background.main" ref={ref} {...scrollViewProps}>
+    <ScrollListContainer bg="background.main" {...scrollViewProps}>
       {children}
     </ScrollListContainer>
   );

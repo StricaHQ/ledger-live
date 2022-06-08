@@ -66,8 +66,8 @@ class Queue: NSObject  {
     }
     
     private func onEventWrapper(_ type: Action, withData: ExtraData?) -> Void {
-        /// Modify the message with perhaps a global queue, on the JS side we should polyfill the info missing
-        /// such as the app name and whatnot.
+        /// Since we are agnostic to what we are running in the queue we just relay the index of the queue we just processed
+        /// and let JavaScript figure out what we've just done. In an ideal world we wouldn't need to do this.
         var wrappedData = withData ?? ExtraData()
         wrappedData.queueItem = self.index - 1
 

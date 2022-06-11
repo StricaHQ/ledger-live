@@ -30,6 +30,15 @@ enum Action: String, CaseIterable {
     case bulkProgress = "bulk-progress"
 }
 
+enum TransportError: String, CaseIterable {
+    case bluetoothRequired = "bluetooth-required"
+    case deviceAlreadyConnected = "device-already-connected"
+    case deviceDisconnected = "deviceDisconnected"
+    case pairingFailed = "pairingFailed"
+    case userPendingAction = "userPendingAction"
+    case writeError = "writeError"
+}
+
 /// Event payloads
 struct Payload: Codable {
     let event: String

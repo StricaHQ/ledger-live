@@ -1,209 +1,152 @@
 import { AppState, NativeModules } from "react-native";
-import Transport from "@ledgerhq/hw-transport";
-import { log } from "@ledgerhq/logs";
+import Transport, {
+  DescriptorEvent,
+  Device,
+  Observer,
+  Subscription,
+} from "@ledgerhq/hw-transport";
+import {
+  PairingFailed,
+  TransportError,
+  BluetoothRequired,
+} from "@ledgerhq/errors";
+import { type EventSubscription } from "react-native/Libraries/vendor/emitter/EventEmitter";
 import EventEmitter from "./EventEmitter";
 
 const NativeBle = NativeModules.HwTransportReactNativeBle;
 
-/**
- * Allows for us to reuse a transport instance instead of instantiating a new
- * one. This should also prevent race conditions since we would know if there
- * is an action pending on the device via the internal state of the transport.
- */
-let transportsCache: { [key: string]: any } = {};
+let instances: Array<Ble> = [];
 class Ble extends Transport {
-  static appState = "background";
-  static appStateSubscription: any;
-  static uuid = ""; // follow the Device model instead of uuid
-  static scanObserver: any;
-  static isScanning = false;
+  static appState: "background" | "active" | "inactive" = "background";
+  static scanObserver: Observer<DescriptorEvent<unknown>>;
 
+  appStateSubscription: EventSubscription;
   id: string;
-  appStateSubscription: any;
+
+  static log(...m: string[]): void {
+    const tag = "ble-verbose";
+    console.log(tag, ...m);
+  }
 
   constructor(deviceId: string) {
     super();
     this.id = deviceId;
     this.listenToAppStateChanges(); // TODO cleanup chores, keep track of instances
-    log("ble-verbose", `BleTransport(${String(this.id)}) new instance`);
+    Ble.log(`BleTransport(${String(this.id)}) new instance`);
   }
 
-  // To be called from live-common-setup (?) and removed afterwards?
-  // Not sure whether we need to cleanup or not if only invoked once
   private listenToAppStateChanges = () => {
     this.appStateSubscription = AppState.addEventListener("change", (state) => {
-      switch (state) {
-        case "active":
-          NativeBle.onAppStateChange(true);
-          break;
-        case "inactive":
-          NativeBle.onAppStateChange(false);
-          break;
-      }
+      Ble.log("appstate change detected", state);
+      NativeBle.onAppStateChange(state === "active");
     });
   };
 
-  static listeners = EventEmitter?.addListener("BleTransport", (rawEvent) => {
-    const { event, type, data } = JSON.parse(rawEvent);
+  exchange = async (apdu: Buffer): Promise<Buffer> => {
+    Ble.log("apdu", `=> ${apdu.toString("hex")}`);
+    try {
+      const response = await NativeBle.exchange(apdu.toString("hex"));
+      Ble.log("apdu", `<= ${response}`);
+      return Buffer.from(`${response}`, "hex");
+    } catch (error) {
+      throw Ble.remapError(error);
+    }
+  };
 
-    switch (event) {
-      case "status":
-        /// Status handling
-        log("ble-verbose", type);
-        switch (type) {
-          case "start-scanning":
-            Ble.isScanning = true;
-            break;
-          case "stop-scanning":
-            Ble.isScanning = false;
-            break;
-        }
-        break;
-      case "task":
-        switch (type) {
-          case "bulk-progress":
-            log("ble-verbose", `bulk-progress ${Math.round(data?.progress)}`);
-            break;
-          default:
-            log("ble-verbose", type);
-            break;
-        }
-        break;
-      case "new-device":
-        // TODO clean this up to emit the same expected format from the swift transport (?)
-        Ble.scanObserver?.next({
-          type: "add",
-          descriptor: {
-            id: data.uuid,
-            name: data.name,
-            serviceUUIDs: [data.service],
-          },
-        }); // Polyfill with device data based on serviceUUID?
-        break;
+  // TODO this seems to be going to leak since we never stop listening
+  static listener = EventEmitter?.addListener("BleTransport", (rawEvent) => {
+    const { event, data } = JSON.parse(rawEvent); //Nb event === "task" type === "bulk-progress"
+    if (event === "new-device") {
+      Ble.scanObserver?.next({
+        type: "add",
+        descriptor: {
+          id: data.uuid,
+          name: data.name,
+          serviceUUIDs: [data.service],
+        },
+      });
     }
   });
 
-  /// TODO events and whatnot
-  static listen(observer: any) {
-    log("ble-verbose", "listen...");
-    if (!Ble.isScanning) {
-      Ble.isScanning = true;
-      Ble.scanObserver = observer;
-      NativeBle.listen();
-    }
+  static listen = (
+    observer: Observer<DescriptorEvent<unknown>>
+  ): Subscription => {
+    Ble.scanObserver = observer;
+    NativeBle.listen()
+      .then(() => {
+        Ble.log("Start scanning devices");
+      })
+      .catch((error) => {
+        Ble.log("Bluetooth is not available! :ohgod:");
+        observer.error(Ble.remapError(error));
+      });
 
-    // Provide a way to cleanup after a listen
-    const unsubscribe = () => {
-      Ble.stop();
-      log("ble-verbose", "done listening.");
-    };
-
-    return {
-      unsubscribe,
-    };
-  }
-
-  private static stop = (): void => {
-    Ble.isScanning = false;
-    NativeBle.stop();
+    return { unsubscribe: Ble.stop };
   };
 
-  /// Attempt to connect to a device
-  /// Fix the typings here.
-  static open = async (uuidOrDevice: any): Promise<any> => {
-    /// We can be getting a unique id for the device, or a device object.
-    /// First, extract the id
-    const _uuid =
-      typeof uuidOrDevice === "string" ? uuidOrDevice : uuidOrDevice.id;
+  private static stop = async (): Promise<void> => {
+    await NativeBle.stop();
+    Ble.log("Stop scanning devices");
+  };
+
+  static open = async (deviceOrId: Device | string): Promise<Ble> => {
+    const uuid = typeof deviceOrId === "string" ? deviceOrId : deviceOrId.id;
 
     if (await Ble.isConnected()) {
-      log("ble-verbose", "disconnect first");
+      Ble.log("disconnect first");
       await Ble.disconnect();
     }
 
-    log("ble-verbose", `connecting (${_uuid})`);
+    Ble.log(`connecting to (${uuid})`);
 
-    return new Promise((resolve, reject) => {
-      NativeBle.connect(
-        _uuid,
-        Ble.promisify(
-          () => {
-            log("ble-verbose", `connected to (${_uuid})`);
-            const transport = new Ble(_uuid);
-            transportsCache[_uuid] = transport;
-            resolve(transport);
-          },
-          () => {
-            log("ble-verbose", "failed to connect to device");
-            reject(new Error("failed!")); // Use error?
-          }
-        )
-      );
-    });
-  };
-
-  /// Globally disconnect from a connected device
-  static disconnect = (): Promise<any> => {
-    log("ble-verbose", "disconnecting"); // Thought about multi devices?
-    return new Promise((f, r) =>
-      NativeBle.disconnect(Ble.promisify(f, r))
-    ).then((result) => {
-      log("ble-verbose", "disconnected"); // T
-      transportsCache = {};
-      return result;
-    });
-  };
-
-  /// Globally check if we are connected
-  static isConnected = (): Promise<any> => {
-    log("ble-verbose", "check connection"); // Thought about multi devices?
-    return new Promise((f, r) => NativeBle.isConnected(Ble.promisify(f, r)));
-  };
-
-  /// Exchange an apdu with a device
-  exchange = (apdu: Buffer): Promise<any> => {
-    const apduString = apdu.toString("hex");
-    log("apdu", `=> ${apduString}`);
-
-    return new Promise((f, r) =>
-      NativeBle.exchange(apduString, Ble.promisify(f, r))
-    ).then((response) => {
-      log("apdu", `<= ${response}`);
-      return Buffer.from("" + response, "hex");
-    });
-  };
-
-  // React-Native modules use error-first Node-style callbacks
-  // we promisify them to handle inasync/await pattern instead
-  private static promisify = (resolve, reject) => (e, result) => {
-    if (e) {
-      Ble.disconnect();
-      reject(Ble.mapError(e)); // TODO introduce some error mapping
-      return;
-    }
-    resolve(result);
-  };
-
-  // Map the received error string to a known (or generic) error
-  // that we can handle correctly.
-  private static mapError = (error: string) => {
-    switch (error) {
-      case "user-pending-action":
-        return new Error("Action was pending yada yada");
-      default:
-        return new Error("generic");
+    try {
+      const _uuid = await NativeBle.connect(uuid);
+      Ble.log(`connected to (${_uuid})`);
+      return new Ble(_uuid);
+    } catch (error) {
+      Ble.log("failed to connect to device");
+      throw Ble.remapError(error, { uuid });
     }
   };
 
-  static runner = (url) => {
-    // DO it dynamically
-    log("ble-verbose", `request to launch runner for url ${url}`);
+  static disconnect = async (): Promise<boolean> => {
+    Ble.log("disconnecting, and removing listeners");
+    instances.forEach((instance) => instance.appStateSubscription?.remove());
+    instances = [];
+
+    await NativeBle.disconnect();
+    Ble.log("disconnected");
+    return true;
+  };
+
+  static isConnected = (): Promise<boolean> => {
+    Ble.log("checking connection");
+    return NativeBle.isConnected();
+  };
+
+  private static remapError = (error: any, extras?: unknown) => {
+    const mappedErrors = {
+      "pairing-failed": PairingFailed,
+      "bluetooth-required": BluetoothRequired,
+    };
+
+    if (error?.message in mappedErrors)
+      return new mappedErrors[error?.message](extras);
+    return new TransportError(error?.message, error);
+  };
+
+  /// Long running tasks below, buckle up.
+  static runner = (url: string): void => {
+    Ble.log(`request to launch runner for url ${url}`);
     NativeBle.runner(url);
   };
 
-  static queue = (token, index) => {
-    log("ble-verbose", "request to launch queue");
+  static queue = (token: string, index: number): void => {
+    Ble.log("request to launch queue");
     NativeBle.queue(token, "" + index);
+    // Regarding ↑ there's a bug in this rn version that breaks the mapping
+    // between a number on the JS side and Swift. To preserve my sanity, we
+    // are using string in the meantime since it's not a big deal.
   };
 }
 

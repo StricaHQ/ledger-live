@@ -29,6 +29,7 @@
   "react-native": "src/index",
   "dependencies": {
     "@ledgerhq/hw-transport": "workspace:^",
+    "@ledgerhq/errors": "workspace:^",
     "@ledgerhq/logs": "workspace:^"
   },
   "author": "Juan Cortes Ross <juan@bohem.io> (https://github.com/juan-cortes)",

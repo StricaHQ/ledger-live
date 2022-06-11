@@ -17,7 +17,7 @@ class HwTransportReactNativeBle: RCTEventEmitter {
     }
 
     override init() {
-        self.transport = BleTransport(configuration: nil, debugMode: false)
+        self.transport = BleTransport(configuration: nil, debugMode: true)
         super.init()
         EventEmitter.sharedInstance.registerEventEmitter(eventEmitter: self)
     }
@@ -40,77 +40,87 @@ class HwTransportReactNativeBle: RCTEventEmitter {
     
     
     
-    /// Listen for devices. We will emi
+    /// Start scanning for available devices
     ///
-    @objc func listen() -> Void {
-        if let transport = transport, transport.isBluetoothAvailable {
-            /// To allow for subsequent scans
-            self.seenDevicesByUUID = [:]
-            self.lastSeenSize = 0
-
-            /// Notify the observer about starting the scan
-            EventEmitter.sharedInstance.dispatch(
-                event: Event.status,
-                type: Status.startScanning.rawValue,
-                data: nil
-            )
-            
-            DispatchQueue.main.async { /// Seems like I'm going to have to do this all the time
-                transport.scan { [weak self] discoveries in
-                    if discoveries.count != self!.lastSeenSize {
-                        self?.lastSeenSize = discoveries.count
-                        
-                        /// Found devices are handled via events since we need more than one call
-                        /// We can then polyfill the model and other information based on the service ID
-                        /// of the BLE stack
-                        discoveries.forEach{
-                            self?.seenDevicesByUUID[$0.peripheral.uuid.uuidString] = $0.peripheral
-
-                            /// Emit a new device event with all the required information
-                            EventEmitter.sharedInstance.dispatch(
-                                event: Event.newDevice,
-                                type: $0.peripheral.uuid.uuidString,
-                                data: ExtraData(
-                                    uuid: $0.peripheral.uuid.uuidString,
-                                    name: $0.peripheral.name,
-                                    service: $0.serviceUUID.uuidString
-                                )
-                            )
-                        }
-                    }
-                } stopped: {
-                    /// Notify the observer about stop the scan
-                    EventEmitter.sharedInstance.dispatch(
-                        event: Event.status,
-                        type: Status.stopScanning.rawValue,
-                        data: nil
-                    )
+    ///- Parameter resolve: We have succeeded at _starting_ to scan. Does not mean we saw devices
+    ///- Parameter reject: Unable to scan for devices
+    ///
+    @objc func listen(_ resolve: @escaping RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) -> Void {
+        if let transport = transport {
+            if !transport.isBluetoothAvailable {
+                reject(TransportError.bluetoothRequired.rawValue, "", nil)
+            } else if transport.isConnected { /// Triple check we aren't connected, if this fails we'd need to throw
+                transport.disconnect(immediate: false){ [self]_ in
+                    listenImpl()
+                    resolve(true)
                 }
+            } else {
+                listenImpl()
+                resolve(true)
             }
         }
     }
     
-    /// Stop scanning for devices
+    private func listenImpl() -> Void{
+        /// To allow for subsequent scans
+        self.seenDevicesByUUID = [:]
+        self.lastSeenSize = 0
+        
+        DispatchQueue.main.async { [self] in /// Seems like I'm going to have to do this all the time
+            transport!.scan { discoveries in
+                if discoveries.count != self.lastSeenSize {
+                    self.lastSeenSize = discoveries.count
+                    
+                    /// Found devices are handled via events since we need more than one call
+                    /// We can then polyfill the model and other information based on the service ID
+                    /// of the BLE stack
+                    discoveries.forEach{
+                        self.seenDevicesByUUID[$0.peripheral.uuid.uuidString] = $0.peripheral
+
+                        /// Emit a new device event with all the required information
+                        EventEmitter.sharedInstance.dispatch(
+                            event: Event.newDevice,
+                            type: $0.peripheral.uuid.uuidString,
+                            data: ExtraData(
+                                uuid: $0.peripheral.uuid.uuidString,
+                                name: $0.peripheral.name,
+                                service: $0.serviceUUID.uuidString
+                            )
+                        )
+                    }
+                }
+            } stopped: {}
+        }
+    }
+    
+    /// Stop scanning for available devices
     ///
-    @objc func stop() -> Void {
+    ///- Parameter resolve: We have succeeded at stopping the scan.
+    ///- Parameter reject: Naively unused
+    ///
+    @objc func stop(_ resolve: @escaping RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) -> Void {
         if let transport = transport, transport.isBluetoothAvailable {
             DispatchQueue.main.async { /// Seems like I'm going to have to do this all the time
                 transport.stopScanning()
+                resolve(true)
                 self.seenDevicesByUUID = [:]
                 self.lastSeenSize = 0
             }
         }
     }
-    
+
     /// Used to determine if a device connection is still valid since changing apps invalidates it, if all goes according
     /// to the specs we should disconnect as soon as we finish an interaction, so it's important to check whether
     /// the connection still exists before trying to interact. We also do this, probably redundantly, in the exchange func
     ///
-    @objc func isConnected(_ callback: @escaping RCTResponseSenderBlock) -> Void {
+    ///- Parameter resolve: Whether we are connected or not
+    ///- Parameter reject: Naively unused
+    ///
+    @objc func isConnected(_ resolve: @escaping RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) -> Void {
         if let transport = transport {
-            callback([NSNull(), transport.isConnected])
+            resolve(transport.isConnected)
         } else {
-            callback([NSNull(), false])
+            resolve(false)
         }
     }
     
@@ -162,26 +172,29 @@ class HwTransportReactNativeBle: RCTEventEmitter {
 
     /// Connect to a device via its uuid
     ///
-    ///- Parameter uuid:     Unique identifier that represents the Ledger device we want to connect to
-    ///- Parameter callback: Node style callback with a _maybe_ leading error
+    ///- Parameter uuid: Unique identifier that represents the Ledger device we want to connect to
+    ///- Parameter resolve: UUID of the device we've connected to
+    ///- Parameter reject: Unable to establish a connection with the device
     ///
-    @objc func connect(_ uuid: String, callback: @escaping RCTResponseSenderBlock) -> Void {
+    @objc func connect(_ uuid: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
         if let transport = transport {
-            let wrappedCallback = singleUseCallback(callback)
             if transport.isConnected {
-                wrappedCallback([ "device already connected"])
+                reject(TransportError.deviceAlreadyConnected.rawValue, "", nil)
             }
-
-            let peripheral = PeripheralIdentifier(uuid: UUID(uuidString: uuid)!, name: "")
-            DispatchQueue.main.async {
-                transport.connect(toPeripheralID: peripheral) { [self] in
-                    isConnected = false
-                } success: { [self] PeripheralIdentifier in
-                    isConnected = true
-                    wrappedCallback([NSNull(), true])
-                } failure: { [self] e in
-                    isConnected = false
-                    wrappedCallback([String(describing: e), false])
+            else if !transport.isBluetoothAvailable {
+                reject(TransportError.bluetoothRequired.rawValue, "", nil)
+            } else {
+                let peripheral = PeripheralIdentifier(uuid: UUID(uuidString: uuid)!, name: "")
+                DispatchQueue.main.async {
+                    transport.connect(toPeripheralID: peripheral) {
+                    } success: { PeripheralIdentifier in
+                        resolve(uuid)
+                    } failure: { e in
+                        reject(TransportError.pairingFailed.rawValue, "", nil)
+                        if transport.isConnected { /// We may have potentially _connected_ which would break the next scan.
+                            transport.disconnect(immediate: false){_ in }
+                        }
+                    }
                 }
             }
         }
@@ -192,14 +205,14 @@ class HwTransportReactNativeBle: RCTEventEmitter {
     /// to remove any lingering tasks and flags. We don't check whether we are connected before because the
     /// state may not be visible
     ///
-    /// - Parameter callback: Node style callback with a _maybe_ leading error
+    ///- Parameter resolve: true
+    ///- Parameter reject: Naively unused
     ///
-    @objc func disconnect(_ callback: @escaping RCTResponseSenderBlock) -> Void {
+    @objc func disconnect(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
         if let transport = transport {
-            let wrappedCallback = singleUseCallback(callback)
             DispatchQueue.main.async { /// Seems like I'm going to have to do this all the time
-                transport.disconnect(immediate: true, completion: { _ in
-                    wrappedCallback([NSNull(), true])
+                transport.disconnect(immediate: false, completion: { _ in
+                    resolve(true)
                 })
             }
         }
@@ -218,28 +231,28 @@ class HwTransportReactNativeBle: RCTEventEmitter {
     /// Send a raw APDU message to the connected device,
     ///
     /// - Parameter apdu: Message to be sent to the device, gets validated internally inside the transport
-    /// - Parameter callback: Node style callback with a _maybe_ leading error
+    /// - Parameter resolve: Response from the device apdu exchange
+    /// - Parameter reject: Failed to perform the exchange for a variety of reasons
     ///
-    @objc func exchange(_ apdu: String, callback: @escaping RCTResponseSenderBlock) -> Void {
+    @objc func exchange(_ apdu: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
         if let transport = transport {
-            let wrappedCallback = singleUseCallback(callback)
             if !transport.isConnected {
-                wrappedCallback([ "device-disconnected"])
-            }
-
-            DispatchQueue.main.async { /// Seems like I'm going to have to do this all the time
-                transport.exchange(apdu: APDU(raw: apdu)) { result in
-                    switch result {
-                    case .success(let response):
-                        wrappedCallback([NSNull(), response])
-                    case .failure(let error):
-                        switch error {
-                        case .writeError(let description):
-                            wrappedCallback([ "write error \(String(describing:description))"])
-                        case .pendingActionOnDevice:
-                            wrappedCallback([ "user-pending-action"])
-                        default:
-                            wrappedCallback([ "another action"])
+                reject(TransportError.deviceDisconnected.rawValue, "", nil)
+            } else {
+                DispatchQueue.main.async { /// Seems like I'm going to have to do this all the time
+                    transport.exchange(apdu: APDU(raw: apdu)) { result in
+                        switch result {
+                        case .success(let response):
+                            resolve(response)
+                        case .failure(let error):
+                            switch error {
+                            case .writeError(let description):
+                                reject(TransportError.writeError.rawValue, String(describing:description), nil)
+                            case .pendingActionOnDevice:
+                                reject(TransportError.userPendingAction.rawValue, "", nil)
+                            default:
+                                reject(TransportError.writeError.rawValue, "", nil)
+                            }
                         }
                     }
                 }
@@ -258,20 +271,5 @@ class HwTransportReactNativeBle: RCTEventEmitter {
 
     @objc open override func supportedEvents() -> [String] {
         return EventEmitter.sharedInstance.allEvents
-    }
-    
-    /// With the introduction of a hard crash on rn side if the callback was invoked multiple times we now
-    /// need to wrap those callbacks to prevent it. The internal flag acts like a killswitch if it's triggered more than once
-    ///
-    ///- Parameter callback: Original callback that we are wrapping, following the rn pattern
-    ///
-    func singleUseCallback(_ callback: @escaping RCTResponseSenderBlock) -> RCTResponseSenderBlock {
-        var used: Bool = false
-        return { (parameters) -> Void in
-            if !used {
-                used = true
-                return callback(parameters)
-            }
-        }
     }
 }

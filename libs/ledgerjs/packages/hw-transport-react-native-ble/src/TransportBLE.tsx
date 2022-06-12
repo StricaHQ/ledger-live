@@ -9,6 +9,7 @@ import {
   PairingFailed,
   TransportError,
   BluetoothRequired,
+  CantOpenDevice,
 } from "@ledgerhq/errors";
 import { type EventSubscription } from "react-native/Libraries/vendor/emitter/EventEmitter";
 import EventEmitter from "./EventEmitter";
@@ -133,6 +134,7 @@ class Ble extends Transport {
     const mappedErrors = {
       "pairing-failed": PairingFailed,
       "bluetooth-required": BluetoothRequired,
+      "cant-open-device": CantOpenDevice,
     };
 
     if (error?.code in mappedErrors)

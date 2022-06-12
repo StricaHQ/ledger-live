@@ -33,7 +33,8 @@ enum Action: String, CaseIterable {
 enum TransportError: String, CaseIterable {
     case bluetoothRequired = "bluetooth-required"
     case deviceAlreadyConnected = "device-already-connected"
-    case deviceDisconnected = "deviceDisconnected"
+    case deviceDisconnected = "device-disconnected"
+    case cantOpenDevice = "cant-open-device"
     case pairingFailed = "pairingFailed"
     case userPendingAction = "userPendingAction"
     case writeError = "writeError"

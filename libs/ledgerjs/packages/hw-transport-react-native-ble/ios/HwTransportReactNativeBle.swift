@@ -198,6 +198,8 @@ class HwTransportReactNativeBle: RCTEventEmitter {
                 
                 DispatchQueue.main.async {
                     transport.connect(toPeripheralID: peripheral) {
+                        promiseResolved = true
+                        reject(TransportError.cantOpenDevice.rawValue, "", nil)
                     } success: { PeripheralIdentifier in
                         /// On a pairing flow, we'd get a _connect_ but still fail to communicate.
                         /// if the user rejects the pairing, internally the inferMTU fails and we end

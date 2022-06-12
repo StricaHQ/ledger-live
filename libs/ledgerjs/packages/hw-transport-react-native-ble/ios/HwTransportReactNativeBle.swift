@@ -7,7 +7,6 @@ import CoreBluetooth
 @objc(HwTransportReactNativeBle)
 class HwTransportReactNativeBle: RCTEventEmitter {
     var transport: BleTransport? = nil
-    var isConnected: Bool = false
     var runnerTask: Runner?
     var queueTask: Queue?
     var lastSeenSize: Int = 0
@@ -132,8 +131,7 @@ class HwTransportReactNativeBle: RCTEventEmitter {
     ///- Parameter url: Which endpoint to connect to
     ///
     @objc func runner(_ url: String) -> Void {
-        if let transport = transport, isConnected {
-            /// Try to run a scriptrunner
+        if let transport = transport {
             self.runnerTask = Runner(
                 transport,
                 endpoint: URL(string: url)!,
@@ -159,7 +157,7 @@ class HwTransportReactNativeBle: RCTEventEmitter {
             self.queueTask?.setIndex(index: Int(index) ?? 0)
             self.queueTask?.setToken(token: token)
         }
-        else if let transport = transport, isConnected {
+        else if let transport = transport {
             /// Try to run a scriptrunner queue
             self.queueTask = Queue(
                 transport,

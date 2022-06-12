@@ -18,8 +18,8 @@ const NativeBle = NativeModules.HwTransportReactNativeBle;
 
 let instances: Array<Ble> = [];
 class Ble extends Transport {
+  static id = "TransportBle";
   static scanObserver: Observer<DescriptorEvent<unknown>>;
-
   appStateSubscription: EventSubscription;
   appState: "background" | "active" | "inactive" | "" = "";
   id: string;
@@ -59,7 +59,7 @@ class Ble extends Transport {
 
   // TODO this seems to be going to leak since we never stop listening
   static listener = EventEmitter?.addListener("BleTransport", (rawEvent) => {
-    const { event, data } = JSON.parse(rawEvent); //Nb event === "task" type === "bulk-progress"
+    const { event, type, data } = JSON.parse(rawEvent); //Nb event === "task" type === "bulk-progress"
     if (event === "new-device") {
       Ble.scanObserver?.next({
         type: "add",
@@ -69,6 +69,11 @@ class Ble extends Transport {
           serviceUUIDs: [data.service],
         },
       });
+    } else if (event === "task") {
+      // Events emitted from inside a long running task
+      // if it's a queue we can't just say bulk progress, it needs to be ... atomic
+      // as in total progress not item progress. Also emit item consumed?
+      Ble.log(event, type, data); // <-- If we had an observer we could emit there
     }
   });
 

@@ -49,10 +49,12 @@ class HwTransportReactNativeBle: RCTEventEmitter {
         if let transport = transport {
             if !transport.isBluetoothAvailable {
                 reject(TransportError.bluetoothRequired.rawValue, "", nil)
-            } else if transport.isConnected { /// Triple check we aren't connected, if this fails we'd need to throw
-                transport.disconnect(immediate: false){ [self]_ in
-                    listenImpl()
-                    resolve(true)
+            } else if transport.isConnected {
+                DispatchQueue.main.async { [self] in
+                    transport.disconnect(immediate: false){ [self]_ in
+                        listenImpl()
+                        resolve(true)
+                    }
                 }
             } else {
                 listenImpl()
@@ -62,11 +64,10 @@ class HwTransportReactNativeBle: RCTEventEmitter {
     }
     
     private func listenImpl() -> Void{
-        /// To allow for subsequent scans
         self.seenDevicesByUUID = [:]
         self.lastSeenSize = 0
         
-        DispatchQueue.main.async { [self] in /// Seems like I'm going to have to do this all the time
+        DispatchQueue.main.async { [self] in
             transport!.scan { discoveries in
                 if discoveries.count != self.lastSeenSize {
                     self.lastSeenSize = discoveries.count
@@ -100,7 +101,7 @@ class HwTransportReactNativeBle: RCTEventEmitter {
     ///
     @objc func stop(_ resolve: @escaping RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) -> Void {
         if let transport = transport, transport.isBluetoothAvailable {
-            DispatchQueue.main.async { /// Seems like I'm going to have to do this all the time
+            DispatchQueue.main.async {
                 transport.stopScanning()
                 resolve(true)
                 self.seenDevicesByUUID = [:]
@@ -177,6 +178,7 @@ class HwTransportReactNativeBle: RCTEventEmitter {
     ///- Parameter reject: Unable to establish a connection with the device
     ///
     @objc func connect(_ uuid: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
+        var promiseResolved = false
         if let transport = transport {
             if transport.isConnected {
                 reject(TransportError.deviceAlreadyConnected.rawValue, "", nil)
@@ -188,8 +190,16 @@ class HwTransportReactNativeBle: RCTEventEmitter {
                 DispatchQueue.main.async {
                     transport.connect(toPeripheralID: peripheral) {
                     } success: { PeripheralIdentifier in
-                        resolve(uuid)
+                        /// On a pairing flow, we'd get a _connect_ but still fail to communicate.
+                        /// if the user rejects the pairing, internally the inferMTU fails and we end
+                        /// up triggering the failure reject below, in that case, we shouldn't also
+                        /// trigger this callback like cavemen.
+                        if !promiseResolved {
+                            promiseResolved = true
+                            resolve(uuid)
+                        }
                     } failure: { e in
+                        promiseResolved = true
                         reject(TransportError.pairingFailed.rawValue, "", nil)
                         if transport.isConnected { /// We may have potentially _connected_ which would break the next scan.
                             transport.disconnect(immediate: false){_ in }
@@ -210,10 +220,14 @@ class HwTransportReactNativeBle: RCTEventEmitter {
     ///
     @objc func disconnect(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
         if let transport = transport {
-            DispatchQueue.main.async { /// Seems like I'm going to have to do this all the time
-                transport.disconnect(immediate: false, completion: { _ in
-                    resolve(true)
-                })
+            if !transport.isConnected {
+                resolve(true)
+            } else {
+                DispatchQueue.main.async {
+                    transport.disconnect(immediate: false, completion: { _ in
+                        resolve(true)
+                    })
+                }
             }
         }
         /// Perform some cleanup in case we have some long running tasks going on
@@ -239,7 +253,7 @@ class HwTransportReactNativeBle: RCTEventEmitter {
             if !transport.isConnected {
                 reject(TransportError.deviceDisconnected.rawValue, "", nil)
             } else {
-                DispatchQueue.main.async { /// Seems like I'm going to have to do this all the time
+                DispatchQueue.main.async {
                     transport.exchange(apdu: APDU(raw: apdu)) { result in
                         switch result {
                         case .success(let response):

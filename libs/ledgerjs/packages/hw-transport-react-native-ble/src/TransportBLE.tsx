@@ -17,10 +17,10 @@ const NativeBle = NativeModules.HwTransportReactNativeBle;
 
 let instances: Array<Ble> = [];
 class Ble extends Transport {
-  static appState: "background" | "active" | "inactive" = "background";
   static scanObserver: Observer<DescriptorEvent<unknown>>;
 
   appStateSubscription: EventSubscription;
+  appState: "background" | "active" | "inactive" | "" = "";
   id: string;
 
   static log(...m: string[]): void {
@@ -37,8 +37,11 @@ class Ble extends Transport {
 
   private listenToAppStateChanges = () => {
     this.appStateSubscription = AppState.addEventListener("change", (state) => {
-      Ble.log("appstate change detected", state);
-      NativeBle.onAppStateChange(state === "active");
+      if (this.appState !== state) {
+        Ble.log("appstate change detected", state);
+        this.appState = state;
+        NativeBle.onAppStateChange(state === "active");
+      }
     });
   };
 
@@ -130,9 +133,9 @@ class Ble extends Transport {
       "bluetooth-required": BluetoothRequired,
     };
 
-    if (error?.message in mappedErrors)
-      return new mappedErrors[error?.message](extras);
-    return new TransportError(error?.message, error);
+    if (error?.code in mappedErrors)
+      return new mappedErrors[error?.code](extras);
+    return new TransportError(error?.code, error);
   };
 
   /// Long running tasks below, buckle up.

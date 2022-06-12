@@ -37,6 +37,7 @@ enum TransportError: String, CaseIterable {
     case pairingFailed = "pairingFailed"
     case userPendingAction = "userPendingAction"
     case writeError = "writeError"
+    case unknownError = "unknownError"
 }
 
 /// Event payloads

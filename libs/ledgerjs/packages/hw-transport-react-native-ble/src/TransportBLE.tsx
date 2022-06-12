@@ -99,11 +99,13 @@ class Ble extends Transport {
       Ble.log("disconnect first");
       await Ble.disconnect();
     }
+    const serviceUUID = "13d63400-2c97-0004-0000-4c6564676572"; // TODO should be automatic from native side
 
     Ble.log(`connecting to (${uuid})`);
+    Ble.log(`  serviceUUID (${serviceUUID})`);
 
     try {
-      const _uuid = await NativeBle.connect(uuid);
+      const _uuid = await NativeBle.connect(uuid, serviceUUID);
       Ble.log(`connected to (${_uuid})`);
       return new Ble(_uuid);
     } catch (error) {

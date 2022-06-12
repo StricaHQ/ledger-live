@@ -1,6 +1,7 @@
 import Foundation
 import BleTransport
 import Bluejay
+import CoreBluetooth
 
 
 @objc(HwTransportReactNativeBle)
@@ -177,16 +178,24 @@ class HwTransportReactNativeBle: RCTEventEmitter {
     ///- Parameter resolve: UUID of the device we've connected to
     ///- Parameter reject: Unable to establish a connection with the device
     ///
-    @objc func connect(_ uuid: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
+    @objc func connect(_ uuid: String,
+                       serviceUUID: String,
+                       resolve: @escaping RCTPromiseResolveBlock,
+                       reject: @escaping RCTPromiseRejectBlock
+    ) -> Void {
         var promiseResolved = false
         if let transport = transport {
             if transport.isConnected {
-                reject(TransportError.deviceAlreadyConnected.rawValue, "", nil)
+                resolve(uuid)
             }
             else if !transport.isBluetoothAvailable {
                 reject(TransportError.bluetoothRequired.rawValue, "", nil)
             } else {
                 let peripheral = PeripheralIdentifier(uuid: UUID(uuidString: uuid)!, name: "")
+                
+                /// Pass the serviceUUID for the chosen peripheral so the transport knows how to connect to it
+                transport.peripheralsServicesTuple = [(peripheral: peripheral, serviceUUID: CBUUID(string: serviceUUID))]
+                
                 DispatchQueue.main.async {
                     transport.connect(toPeripheralID: peripheral) {
                     } success: { PeripheralIdentifier in

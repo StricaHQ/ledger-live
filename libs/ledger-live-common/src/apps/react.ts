@@ -1,4 +1,5 @@
-import { useState, useReducer, useEffect, useMemo } from "react";
+/* eslint-disable*/
+import { useState, useReducer, useEffect, useMemo, useCallback, useRef } from "react";
 import type { Exec, State, Action, ListAppsResult } from "./types";
 import type { App } from "../types/manager";
 import type { AppType, SortOptions } from "./filtering";
@@ -11,34 +12,50 @@ import {
   predictOptimisticState,
 } from "./logic";
 import { runAppOp } from "./runner";
+import useBackgroundInstallSubject from "./reactBIM";
 
 type UseAppsRunnerResult = [State, (arg0: Action) => void];
 // use for React apps. support dynamic change of the state.
 export const useAppsRunner = (
   listResult: ListAppsResult,
   exec: Exec,
-  appsToRestore?: string[]
+  appsToRestore?: string[],
+  deviceId?: string
 ): UseAppsRunnerResult => {
   // $FlowFixMe for ledger-live-mobile older react/flow version
   const [state, dispatch] = useReducer(reducer, null, () =>
     initState(listResult, appsToRestore)
   );
+  const bimObservable = useBackgroundInstallSubject(deviceId, state)
   const nextAppOp = useMemo(() => getNextAppOp(state), [state]);
   const appOp = state.currentAppOp || nextAppOp;
+  const onDispatchEvent = useCallback((event)=>{
+    dispatch({
+      type: "onRunnerEvent",
+      event
+    });
+  }, [])
+
   useEffect(() => {
-    if (appOp) {
-      const sub = runAppOp(state, appOp, exec).subscribe((event) => {
-        dispatch({
-          type: "onRunnerEvent",
-          event,
-        });
-      });
+    if (appOp && !bimObservable) {
+      console.log("OLD WAYS or LLD ")
+      const sub = runAppOp(state, appOp, exec).subscribe(onDispatchEvent);
       return () => {
         sub.unsubscribe();
       };
-    } // we only want to redo the effect on appOp changes here
+    } // we only want to redo the effect on appOp changes here  
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listResult, appOp, exec]);
+
+  useEffect(() => {
+    if (bimObservable){
+      const sub = bimObservable.subscribe(onDispatchEvent);
+      return () => {
+        sub.unsubscribe();
+      };
+    } 
+  }, [bimObservable]);
+
   return [state, dispatch];
 };
 

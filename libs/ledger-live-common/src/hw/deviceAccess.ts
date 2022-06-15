@@ -86,7 +86,7 @@ export const withDevice =
     new Observable((o) => {
       let unsubscribed;
       let sub;
-      const deviceQueue = deviceQueues[deviceId] || Promise.resolve();
+      const deviceQueue = Promise.resolve();
 
       const finalize = (transport, cleanups) => {
         setAllowAutoDisconnect(transport, deviceId, true);
@@ -118,12 +118,12 @@ export const withDevice =
             await transport.send(0, 0, 0, 0).catch(() => {});
           }
 
-          if (
-            transport.requestConnectionPriority &&
-            typeof transport.requestConnectionPriority === "function"
-          ) {
-            await transport.requestConnectionPriority("High");
-          }
+          // if (
+          //   transport.requestConnectionPriority &&
+          //   typeof transport.requestConnectionPriority === "function"
+          // ) {
+          //   await transport.requestConnectionPriority("High");
+          // }
 
           return transport;
         })

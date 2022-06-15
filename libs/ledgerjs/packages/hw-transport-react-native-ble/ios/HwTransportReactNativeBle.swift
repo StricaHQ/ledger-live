@@ -151,10 +151,8 @@ class HwTransportReactNativeBle: RCTEventEmitter {
     ///- Parameter index: Which item of the queue to start working from, this is particularly useful when we
     ///                   replace a token with another one since we likely have processed a few items already
     ///
-    @objc(queue:index:)
-    func queue(_ token: String, index: String) -> Void {
+    @objc func queue(_ token: String) -> Void {
         if self.queueTask != nil{
-            self.queueTask?.setIndex(index: Int(index) ?? 0)
             self.queueTask?.setToken(token: token)
         }
         else if let transport = transport {
@@ -162,7 +160,6 @@ class HwTransportReactNativeBle: RCTEventEmitter {
             self.queueTask = Queue(
                 transport,
                 token: token,
-                index: Int(index) ?? 0,
                 onEvent: self.emitFromRunner,
                 onDone: self.blackHole
             )

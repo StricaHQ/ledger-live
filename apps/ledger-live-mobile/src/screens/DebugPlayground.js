@@ -32,13 +32,21 @@ export default function DebugPlayground() {
     "&hash=8bf06e39e785ba5a8cf27bfa95036ccab02d756f8b8f44c3c3137fd035d5cb0c" +
     "&livecommonversion=22.0.0";
 
-  const onPress = useCallback(() => {
+  const onInstall = useCallback(() => {
     (async function exchange() {
       await withDevice(lastConnectedDevice?.deviceId)(_ =>
         from([BleTransport.runner(urlInstall)]),
       ).toPromise();
     })();
-  }, [lastConnectedDevice, urlInstall]);
+  }, [lastConnectedDevice?.deviceId, urlInstall]);
+
+  const onUninstall = useCallback(() => {
+    (async function exchange() {
+      await withDevice(lastConnectedDevice?.deviceId)(_ =>
+        from([BleTransport.runner(urlUninstall)]),
+      ).toPromise();
+    })();
+  }, [lastConnectedDevice?.deviceId, urlUninstall]);
 
   return (
     <NavigationScrollView>
@@ -52,14 +60,14 @@ export default function DebugPlayground() {
           mt={2}
           type={"primary"}
           event={""}
-          onPress={onPress}
+          onPress={onUninstall}
           title={"Uninstall"}
         />
         <Button
           mt={2}
           type={"primary"}
           event={""}
-          onPress={onPress}
+          onPress={onInstall}
           title={"Install"}
         />
       </View>

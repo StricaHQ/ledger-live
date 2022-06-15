@@ -48,6 +48,18 @@ struct Payload: Codable {
     let data: ExtraData?
 }
 
+
+struct Tasks: Codable {
+    let tasks: [Item]
+}
+
+struct Item: Codable {
+    let operation: String
+    let id: String
+    let targetId: String
+    let liveCommonVersion: String
+}
+
 struct ExtraData: Codable {
     var msg: String?
 
@@ -61,6 +73,7 @@ struct ExtraData: Codable {
     
     /// Queue action extras
     var queueItem: Int?
+    var type: String?
 }
 
 class EventEmitter {

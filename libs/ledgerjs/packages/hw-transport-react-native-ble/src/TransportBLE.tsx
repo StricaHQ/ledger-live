@@ -20,6 +20,8 @@ let instances: Array<Ble> = [];
 class Ble extends Transport {
   static id = "TransportBle";
   static scanObserver: Observer<DescriptorEvent<unknown>>;
+  static queueObserver: Observer<any>;
+
   appStateSubscription: EventSubscription;
   appState: "background" | "active" | "inactive" | "" = "";
   id: string;
@@ -73,7 +75,15 @@ class Ble extends Transport {
       // Events emitted from inside a long running task
       // if it's a queue we can't just say bulk progress, it needs to be ... atomic
       // as in total progress not item progress. Also emit item consumed?
-      Ble.log(event, type, data); // <-- If we had an observer we could emit there
+      // Ble.log(event, type, data); // <-- If we had an observer we could emit there
+      if (Ble.queueObserver) {
+        const progress = Math.round((data?.progress || 0) * 100) / 100;
+        Ble.queueObserver.next({
+          type,
+          appOp: { name: data.name, type: data.type },
+          progress: type === "runProgress" ? progress || 0 : undefined,
+        });
+      }
     }
   });
 
@@ -153,9 +163,10 @@ class Ble extends Transport {
     NativeBle.runner(url);
   };
 
-  static queue = (token: string, index: number): void => {
-    Ble.log("request to launch queue");
-    NativeBle.queue(token, "" + index);
+  static queue = (observer: Observer<any>, token: string): void => {
+    Ble.log("request to launch queue", token);
+    Ble.queueObserver = observer;
+    NativeBle.queue(token);
     // Regarding ↑ there's a bug in this rn version that breaks the mapping
     // between a number on the JS side and Swift. To preserve my sanity, we
     // are using string in the meantime since it's not a big deal.

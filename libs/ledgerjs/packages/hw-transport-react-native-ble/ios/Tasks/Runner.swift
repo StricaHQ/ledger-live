@@ -80,7 +80,7 @@ class Runner: NSObject  {
                 self.onEmit!(Action.permissionRefused, nil)
             }
         } else if self.isInBulkMode {
-            let progress = ((Double(self.APDUMaxCount-self.APDUQueue.count))/Double(self.APDUMaxCount))*100
+            let progress = ((Double(self.APDUMaxCount-self.APDUQueue.count))/Double(self.APDUMaxCount))
             self.onEmit!(Action.bulkProgress, ExtraData(progress: progress))
         }
         

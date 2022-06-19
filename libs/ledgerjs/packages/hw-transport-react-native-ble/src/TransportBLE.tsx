@@ -110,6 +110,7 @@ class Ble extends Transport {
     Ble.log("Stop scanning devices");
   };
 
+  // @ts-ignore
   static open = async (deviceOrId: Device | string): Promise<Ble> => {
     const uuid = typeof deviceOrId === "string" ? deviceOrId : deviceOrId.id;
 
@@ -120,7 +121,7 @@ class Ble extends Transport {
     Ble.log(`connecting to (${uuid})`);
 
     try {
-      const _uuid = await NativeBle.connect(uuid, serviceUUID);
+      const _uuid = await NativeBle.connect(uuid, "no_longer_used");
       Ble.log(`connected to (${_uuid})`);
       return new Ble(_uuid);
     } catch (error) {
@@ -138,6 +139,7 @@ class Ble extends Transport {
         Ble.log("throw error without observable");
         throw Ble.remapError(error, { uuid });
       }
+      Ble.disconnect();
     }
   };
 

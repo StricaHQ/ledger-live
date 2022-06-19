@@ -47,12 +47,11 @@ async function getTokenFromQueue(queue: Queue): Promise<string> {
 
 async function getQueueFromToken(token: string): Promise<Queue> {
   const { data } = await network({
-    method: "POST",
-    url: "http://192.168.0.168:8888/",
+    method: "GET",
+    url: `${getBaseApiUrl()}/unpacked-queue`,
     headers: {
-      "Content-Type": "text/plain",
+      "X-Bim-Token": token,
     },
-    data: token,
   });
   return data;
 }

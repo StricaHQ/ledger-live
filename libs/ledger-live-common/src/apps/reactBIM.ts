@@ -16,6 +16,7 @@ const useBackgroundInstallSubject = (
   const observable: any = useRef(new Subject().pipe(map(onEventDispatch)));
   const nextAppOp = useMemo(() => getNextAppOp(state), [state]);
   const [transport, setTransport] = useState<any>();
+  const [pendingTransport, setPendingTransport] = useState<boolean>(false);
   const [token, setToken] = useState<string>();
   const lastSeenQueueSize = useRef(0);
   const { installQueue, uninstallQueue, updateAllQueue } = state;
@@ -23,8 +24,8 @@ const useBackgroundInstallSubject = (
     installQueue.length + uninstallQueue.length + updateAllQueue.length;
 
   const shouldStartNewJob = useMemo(
-    () => deviceId && !transport && token && queueSize,
-    [deviceId, queueSize, token, transport]
+    () => deviceId && !transport && !pendingTransport && token && queueSize,
+    [deviceId, pendingTransport, queueSize, token, transport]
   );
 
   useEffect(() => {
@@ -44,8 +45,10 @@ const useBackgroundInstallSubject = (
 
   useEffect(() => {
     async function startJob(deviceId: string) {
+      setPendingTransport(true);
       await withDevice(deviceId)((transport) => {
         setTransport(transport);
+        setPendingTransport(false);
         return observable.current;
       })
         .toPromise()
@@ -60,6 +63,7 @@ const useBackgroundInstallSubject = (
           });
         })
         .finally(() => {
+          setPendingTransport(false);
           setTransport(undefined);
         });
     }

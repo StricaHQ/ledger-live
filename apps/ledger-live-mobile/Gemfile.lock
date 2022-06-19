@@ -289,4 +289,4 @@ DEPENDENCIES
   semver2 (~> 3.4, >= 3.4.2)
 
 BUNDLED WITH
-   2.2.27
+   2.3.16

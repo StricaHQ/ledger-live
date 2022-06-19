@@ -6,7 +6,6 @@ import CoreBluetooth
 
 @objc(HwTransportReactNativeBle)
 class HwTransportReactNativeBle: RCTEventEmitter {
-    var transport: BleTransport? = nil
     var runnerTask: Runner?
     var queueTask: Queue?
     var lastSeenSize: Int = 0
@@ -17,8 +16,8 @@ class HwTransportReactNativeBle: RCTEventEmitter {
     }
 
     override init() {
-        self.transport = BleTransport(configuration: nil, debugMode: true)
         super.init()
+        print(BleTransport.shared)
         EventEmitter.sharedInstance.registerEventEmitter(eventEmitter: self)
     }
     
@@ -46,29 +45,27 @@ class HwTransportReactNativeBle: RCTEventEmitter {
     ///- Parameter reject: Unable to scan for devices
     ///
     @objc func listen(_ resolve: @escaping RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) -> Void {
-        if let transport = transport {
-            if !transport.isBluetoothAvailable {
-                reject(TransportError.bluetoothRequired.rawValue, "", nil)
-            } else if transport.isConnected {
-                DispatchQueue.main.async { [self] in
-                    transport.disconnect(immediate: false){ [self]_ in
-                        listenImpl()
-                        resolve(true)
-                    }
+        if !BleTransport.shared.isBluetoothAvailable {
+            reject(TransportError.bluetoothRequired.rawValue, "", nil)
+        } else if BleTransport.shared.bluejay.isConnected {
+            DispatchQueue.main.async { [self] in
+                BleTransport.shared.disconnect(immediate: false){ [self]_ in
+                    listenImpl()
+                    resolve(true)
                 }
-            } else {
-                listenImpl()
-                resolve(true)
             }
+        } else {
+            listenImpl()
+            resolve(true)
         }
     }
     
-    private func listenImpl() -> Void{
+    private func listenImpl() -> Void {
         self.seenDevicesByUUID = [:]
         self.lastSeenSize = 0
         
         DispatchQueue.main.async { [self] in
-            transport!.scan { discoveries in
+            BleTransport.shared.scan { discoveries in
                 if discoveries.count != self.lastSeenSize {
                     self.lastSeenSize = discoveries.count
                     
@@ -90,7 +87,7 @@ class HwTransportReactNativeBle: RCTEventEmitter {
                         )
                     }
                 }
-            } stopped: {}
+            } stopped: {_ in }
         }
     }
     
@@ -100,9 +97,9 @@ class HwTransportReactNativeBle: RCTEventEmitter {
     ///- Parameter reject: Naively unused
     ///
     @objc func stop(_ resolve: @escaping RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) -> Void {
-        if let transport = transport, transport.isBluetoothAvailable {
+        if BleTransport.shared.isBluetoothAvailable {
             DispatchQueue.main.async {
-                transport.stopScanning()
+                BleTransport.shared.stopScanning()
                 resolve(true)
                 self.seenDevicesByUUID = [:]
                 self.lastSeenSize = 0
@@ -118,11 +115,7 @@ class HwTransportReactNativeBle: RCTEventEmitter {
     ///- Parameter reject: Naively unused
     ///
     @objc func isConnected(_ resolve: @escaping RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) -> Void {
-        if let transport = transport {
-            resolve(transport.isConnected)
-        } else {
-            resolve(false)
-        }
+        resolve(BleTransport.shared.bluejay.isConnected)
     }
     
     /// Process a long running task of the Runner type which connects to a scriptrunner endpoint and proxies the
@@ -131,14 +124,11 @@ class HwTransportReactNativeBle: RCTEventEmitter {
     ///- Parameter url: Which endpoint to connect to
     ///
     @objc func runner(_ url: String) -> Void {
-        if let transport = transport {
-            self.runnerTask = Runner(
-                transport,
-                endpoint: URL(string: url)!,
-                onEvent: self.emitFromRunner,
-                onDone: self.blackHole
-            )
-        }
+        self.runnerTask = Runner(
+            endpoint: URL(string: url)!,
+            onEvent: self.emitFromRunner,
+            onDone: self.blackHole
+        )
     }
     
     /// Process a long running task of the Queue type or update an ongoing queue if it's already happening.
@@ -150,19 +140,24 @@ class HwTransportReactNativeBle: RCTEventEmitter {
     ///                   to perform on the devices such as installing or inanstalling specific application.
     ///- Parameter index: Which item of the queue to start working from, this is particularly useful when we
     ///                   replace a token with another one since we likely have processed a few items already
-    ///
+    ///1
     @objc func queue(_ token: String) -> Void {
-        if self.queueTask != nil{
-            self.queueTask?.setToken(token: token)
+        if let queue = self.queueTask {
+            queue.setToken(token: token)
         }
-        else if let transport = transport {
+        else {
             /// Try to run a scriptrunner queue
             self.queueTask = Queue(
-                transport,
                 token: token,
                 onEvent: self.emitFromRunner,
                 onDone: self.blackHole
             )
+        }
+    }
+    
+    @objc func stopQueue() -> Void {
+        if let queue = self.queueTask {
+            queue.stop()
         }
     }
 
@@ -179,37 +174,33 @@ class HwTransportReactNativeBle: RCTEventEmitter {
                        reject: @escaping RCTPromiseRejectBlock
     ) -> Void {
         var promiseResolved = false
-        if let transport = transport {
-            if transport.isConnected {
-                resolve(uuid)
-            }
-            else if !transport.isBluetoothAvailable {
-                reject(TransportError.bluetoothRequired.rawValue, "", nil)
-            } else {
-                let peripheral = PeripheralIdentifier(uuid: UUID(uuidString: uuid)!, name: "")
-                
-                /// Pass the serviceUUID for the chosen peripheral so the transport knows how to connect to it
-                transport.peripheralsServicesTuple = [(peripheral: peripheral, serviceUUID: CBUUID(string: serviceUUID))]
-                
-                DispatchQueue.main.async {
-                    transport.connect(toPeripheralID: peripheral) {
+        if BleTransport.shared.bluejay.isConnected {
+            resolve(uuid)
+        }
+        else if !BleTransport.shared.isBluetoothAvailable {
+            reject(TransportError.bluetoothRequired.rawValue, "", nil)
+        } else {
+            let peripheral = PeripheralIdentifier(uuid: UUID(uuidString: uuid)!, name: "")
+
+            DispatchQueue.main.async {
+                BleTransport.shared.connect(toPeripheralID: peripheral) {
+                    if !promiseResolved {
                         promiseResolved = true
                         reject(TransportError.cantOpenDevice.rawValue, "", nil)
-                    } success: { PeripheralIdentifier in
-                        /// On a pairing flow, we'd get a _connect_ but still fail to communicate.
-                        /// if the user rejects the pairing, internally the inferMTU fails and we end
-                        /// up triggering the failure reject below, in that case, we shouldn't also
-                        /// trigger this callback like cavemen.
-                        if !promiseResolved {
-                            promiseResolved = true
-                            resolve(uuid)
-                        }
-                    } failure: { e in
+                    }
+                } success: { PeripheralIdentifier in
+                    /// On a pairing flow, we'd get a _connect_ but still fail to communicate.
+                    /// if the user rejects the pairing, internally the inferMTU fails and we end
+                    /// up triggering the failure reject below, in that case, we shouldn't also
+                    /// trigger this callback like cavemen.
+                    if !promiseResolved {
                         promiseResolved = true
+                        resolve(uuid)
+                    }
+                } failure: { e in
+                    if !promiseResolved {
+                            promiseResolved = true
                         reject(TransportError.pairingFailed.rawValue, "", nil)
-                        if transport.isConnected { /// We may have potentially _connected_ which would break the next scan.
-                            transport.disconnect(immediate: false){_ in }
-                        }
                     }
                 }
             }
@@ -225,26 +216,25 @@ class HwTransportReactNativeBle: RCTEventEmitter {
     ///- Parameter reject: Naively unused
     ///
     @objc func disconnect(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
-        if let transport = transport {
-            if !transport.isConnected {
+        DispatchQueue.main.async { [self] in
+            /// Perform some cleanup in case we have some long running tasks going on
+            if self.queueTask != nil {
+                queueTask?.stop()
+                queueTask = nil
+            }
+            
+            if self.runnerTask != nil {
+                runnerTask?.stop()
+                runnerTask = nil
+            }
+
+            if !BleTransport.shared.bluejay.isConnected {
                 resolve(true)
             } else {
-                DispatchQueue.main.async {
-                    transport.disconnect(immediate: false, completion: { _ in
-                        resolve(true)
-                    })
-                }
+                BleTransport.shared.disconnect(immediate: false, completion: { _ in
+                    resolve(true)
+                })
             }
-        }
-        /// Perform some cleanup in case we have some long running tasks going on
-        if self.queueTask != nil {
-            queueTask?.stop()
-            queueTask = nil
-        }
-        
-        if self.runnerTask != nil {
-            runnerTask?.stop()
-            runnerTask = nil
         }
     }
     
@@ -255,24 +245,22 @@ class HwTransportReactNativeBle: RCTEventEmitter {
     /// - Parameter reject: Failed to perform the exchange for a variety of reasons
     ///
     @objc func exchange(_ apdu: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
-        if let transport = transport {
-            if !transport.isConnected {
-                reject(TransportError.deviceDisconnected.rawValue, "", nil)
-            } else {
-                DispatchQueue.main.async {
-                    transport.exchange(apdu: APDU(raw: apdu)) { result in
-                        switch result {
-                        case .success(let response):
-                            resolve(response)
-                        case .failure(let error):
-                            switch error {
-                            case .writeError(let description):
-                                reject(TransportError.writeError.rawValue, String(describing:description), nil)
-                            case .pendingActionOnDevice:
-                                reject(TransportError.userPendingAction.rawValue, "", nil)
-                            default:
-                                reject(TransportError.writeError.rawValue, "", nil)
-                            }
+        if !BleTransport.shared.bluejay.isConnected {
+            reject(TransportError.deviceDisconnected.rawValue, "", nil)
+        } else {
+            DispatchQueue.main.async {
+                BleTransport.shared.exchange(apdu: APDU(raw: apdu)) { result in
+                    switch result {
+                    case .success(let response):
+                        resolve(response)
+                    case .failure(let error):
+                        switch error {
+                        case .writeError(let description):
+                            reject(TransportError.writeError.rawValue, String(describing:description), nil)
+                        case .pendingActionOnDevice:
+                            reject(TransportError.userPendingAction.rawValue, "", nil)
+                        default:
+                            reject(TransportError.writeError.rawValue, "", nil)
                         }
                     }
                 }

@@ -15,28 +15,25 @@ import BleTransport
 /// while at the same time breaking the dependency with the JS thread, this is the highlight, yes.
 class Queue: NSObject  {
     let BIMWebsocketEndpoint : String = "ws://192.168.0.168:8080"
-    
-    var transport : BleTransport
-    var runner : Runner?
+
+    var runner : Runner?                        /// Handler of the current task
+    var pendingRequest: URLSessionDataTask?     /// Backend request to unpack a token
+
     var onEvent: ((Action, ExtraData?)->Void)?
     var onDone: ((String, String)->Void)?
-    var pendingRequest: URLSessionDataTask?
 
     var token: String = ""                      /// Tokenized representation of our queue
     var index: Int = 0                          /// Current index on the queue
     var item: Item?                             /// Current item we are processing
     var tasks: Tasks = Tasks(tasks: [])         /// Resolved items from the queue token
-    
+
     var stopped: Bool = false
-    
+
     public init (
-        _ transport : BleTransport,
         token: String,
         onEvent: @escaping ((Action, ExtraData?)->Void),
         onDone: ((String, String)->Void)?
     ) {
-        
-        self.transport = transport
         self.token = token
         super.init()
 
@@ -56,6 +53,13 @@ class Queue: NSObject  {
         tasks = Tasks(tasks: [])
         runner?.stop()
         pendingRequest?.cancel()
+        
+        // Cleanup by sending an openApp message for Bolos
+        if BleTransport.shared.isConnected {
+            BleTransport.shared.exchange(apdu: APDU(raw: "e0d8000005426f6c6f73")){answer in
+                print("cleanup", answer)
+            }
+        }
     }
     
     /// Given a token string, ask backend for the actual queue we are processing. We could technically send the
@@ -64,7 +68,7 @@ class Queue: NSObject  {
     private func resolveQueueFromToken(_ autoStart: Bool) {
         let url = URL(string: "http://192.168.0.168")!
         var request = URLRequest(url: url)
-        request.httpMethod = "POST"
+        request.httpMethod = "POST" // TODO adapt to the new method thingie
         request.httpBody = self.token.data(using: .utf8)
         let session = URLSession.shared
         
@@ -115,7 +119,6 @@ class Queue: NSObject  {
             )
 
             self.runner = Runner(
-                transport,
                 endpoint: URL(string: BIMWebsocketEndpoint)!,
                 onEvent: self.onEventWrapper,
                 onDone: self.onDoneWrapper,
@@ -164,9 +167,18 @@ class Queue: NSObject  {
             if (doneMessage == "CONTINUE") {
                 self.index += 1
                 self.startRunner()
+            } else if (self.index+1 < self.tasks.tasks.count) {
+                self.index += 1
+                self.startRunner()
+                print("Token modified, try to get next one ignoring the HSM message")
             } else {
                 self.runner = nil
-                self.onDone!(disconnectReason, doneMessage) /// TODO, or maybe not ok?
+                EventEmitter.sharedInstance.dispatch(
+                    event: Event.task,
+                    type: "runCompleted",
+                    data: ExtraData()
+                )
+                self.onDone!(disconnectReason, doneMessage)
             }
         }
     }

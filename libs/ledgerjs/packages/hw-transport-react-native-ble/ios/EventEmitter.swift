@@ -56,8 +56,7 @@ struct Tasks: Codable {
 struct Item: Codable {
     let operation: String
     let id: String
-    let targetId: String
-    let liveCommonVersion: String
+    let appName: String
 }
 
 struct ExtraData: Codable {

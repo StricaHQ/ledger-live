@@ -10,7 +10,6 @@ import Starscream
 import BleTransport
 
 class Runner: NSObject  {
-    var transport : BleTransport
     var endpoint : URL
     
     var onEmit: ((Action, ExtraData?)->Void)?
@@ -36,23 +35,20 @@ class Runner: NSObject  {
     }
 
     convenience init (
-        _ transport : BleTransport,
         endpoint : URL,
         onEvent: @escaping ((Action, ExtraData?)->Void),
         onDone: ((String, String)->Void)?,
         withInitialMessage: String
     ) {
-        self.init(transport, endpoint: endpoint, onEvent: onEvent, onDone: onDone)
+        self.init(endpoint: endpoint, onEvent: onEvent, onDone: onDone)
         self.initialMessage = withInitialMessage
     }
     
     public init (
-        _ transport : BleTransport,
         endpoint : URL,
         onEvent: @escaping ((Action, ExtraData?)->Void),
         onDone: ((String, String)->Void)?
     ) {
-        self.transport = transport
         self.endpoint = endpoint
         self.isRunning = true
         self.onEmit = onEvent
@@ -69,7 +65,7 @@ class Runner: NSObject  {
     
     /// Based on the apdu in/out we can infer some events that we need to emit up to javascript. Not all exchanges need an event.
     private func maybeEmitEvent(_ apdu : String, fromHSM: Bool = true) {
-        if fromHSM && apdu.starts(with: "e051") {
+            if fromHSM && apdu.starts(with: "e051") {
             self.isUserBlocked = true
             self.onEmit!(Action.permissionRequested, nil)
         } else if !fromHSM && self.isUserBlocked {
@@ -147,7 +143,7 @@ class Runner: NSObject  {
         if !self.APDUQueue.isEmpty && !self.stopped {
             let apdu = self.APDUQueue.removeFirst()
             self.maybeEmitEvent((apdu.data.hexEncodedString()))
-            self.transport.exchange(apdu: apdu, callback: self.onDeviceResponse)
+            BleTransport.shared.exchange(apdu: apdu, callback: self.onDeviceResponse)
         } else if self.pendingOnDone {
             /// We don't have pending apdus, and we have gone past a bulk payload, we can emit the disconnect
             self.onDone!("reason", self.lastScriptRunnerMessage) // TODO not quite right
@@ -178,4 +174,10 @@ class Runner: NSObject  {
             print(error)
         }
     }
+}
+
+struct HSMResponse: Codable {
+    let nonce: Int
+    let response: String
+    let data: String
 }

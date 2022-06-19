@@ -1,6 +1,7 @@
 import network from "../network";
 import { getEnv } from "../env";
 import type { State } from "../apps/types";
+import { getActionPlan } from "../apps/logic";
 import { version as liveCommonVersion } from "../../package.json";
 
 const getBaseApiUrl = () => getEnv("API_BIM");
@@ -20,26 +21,17 @@ type Item = {
 type Queue = Array<Item>;
 
 function buildQueueFromState(state: State): Array<Item> {
-  const queue: Array<Item> = [];
+  const actionPlan = getActionPlan(state);
   const { targetId } = state.deviceInfo;
+  const queue: Array<Item> = actionPlan.map(({ name, type }) => ({
+    id: state.appByName[name].id,
+    operation: type,
+    targetId,
+    liveCommonVersion,
+  }));
 
-  Object.entries({
-    uninstall: state.uninstallQueue,
-    install: state.installQueue,
-  }).forEach(([operation, items]: any) => {
-    // Install | Uninstall
-    items.forEach((appName) => {
-      if (appName in state.appByName) {
-        const app = state.appByName[appName];
-        queue.push({
-          id: app.id,
-          operation,
-          targetId,
-          liveCommonVersion,
-        });
-      }
-    });
-  });
+  console.log("BIMBIM new queue", actionPlan);
+
   return queue;
 }
 

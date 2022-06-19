@@ -15,5 +15,5 @@ export function useApps(
     [deviceId],
   );
 
-  return useAppsRunner(listAppsRes, exec, appsToRestore);
+  return useAppsRunner(listAppsRes, exec, [], deviceId);
 }

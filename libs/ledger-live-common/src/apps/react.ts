@@ -1,5 +1,4 @@
-/* eslint-disable*/
-import { useState, useReducer, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useReducer, useEffect, useMemo, useCallback } from "react";
 import type { Exec, State, Action, ListAppsResult } from "./types";
 import type { App } from "../types/manager";
 import type { AppType, SortOptions } from "./filtering";
@@ -22,39 +21,33 @@ export const useAppsRunner = (
   appsToRestore?: string[],
   deviceId?: string
 ): UseAppsRunnerResult => {
-  // $FlowFixMe for ledger-live-mobile older react/flow version
   const [state, dispatch] = useReducer(reducer, null, () =>
     initState(listResult, appsToRestore)
   );
-  const bimObservable = useBackgroundInstallSubject(deviceId, state)
   const nextAppOp = useMemo(() => getNextAppOp(state), [state]);
   const appOp = state.currentAppOp || nextAppOp;
-  const onDispatchEvent = useCallback((event)=>{
+  const onDispatchEvent = useCallback((event) => {
     dispatch({
       type: "onRunnerEvent",
-      event
+      event,
     });
-  }, [])
+  }, []);
+
+  const bimActive = useBackgroundInstallSubject(
+    deviceId,
+    state,
+    onDispatchEvent
+  );
 
   useEffect(() => {
-    if (appOp && !bimObservable) {
-      console.log("OLD WAYS or LLD ")
+    if (appOp && !bimActive) {
       const sub = runAppOp(state, appOp, exec).subscribe(onDispatchEvent);
       return () => {
         sub.unsubscribe();
       };
-    } // we only want to redo the effect on appOp changes here  
+    } // we only want to redo the effect on appOp changes here
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listResult, appOp, exec]);
-
-  useEffect(() => {
-    if (bimObservable){
-      const sub = bimObservable.subscribe(onDispatchEvent);
-      return () => {
-        sub.unsubscribe();
-      };
-    } 
-  }, [bimObservable]);
 
   return [state, dispatch];
 };

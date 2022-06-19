@@ -1,47 +1,80 @@
-import { useRef, useEffect, useMemo } from "react";
-import { Subject, from } from "rxjs";
+import { useMemo, useRef, useState, useEffect } from "react";
+import { Subject } from "rxjs";
+import { map } from "rxjs/operators";
 import type { State } from "./types";
 import { withDevice } from "../hw/deviceAccess";
 import BIM from "../api/BIM";
+import { getNextAppOp } from "./logic";
 
 const useBackgroundInstallSubject = (
   deviceId: string | undefined,
-  state: State
+  state: State,
+  onEventDispatch: (event) => void
 ): any => {
-  const observable = useMemo(() => new Subject(), []);
-  const transportRef = useRef<any>();
-  const { installQueue, uninstallQueue } = state;
+  // Whenever the queue changes, we need get a new token, but ONLY if this queue
+  // change is because we are adding a new item and not because an item was consumed.
+  const observable: any = useRef(new Subject().pipe(map(onEventDispatch)));
+  const nextAppOp = useMemo(() => getNextAppOp(state), [state]);
+  const [transport, setTransport] = useState<any>();
+  const [token, setToken] = useState<string>();
+  const lastSeenQueueSize = useRef(0);
+  const { installQueue, uninstallQueue, updateAllQueue } = state;
+  const queueSize =
+    installQueue.length + uninstallQueue.length + updateAllQueue.length;
+
+  const shouldStartNewJob = useMemo(
+    () => deviceId && !transport && token && queueSize,
+    [deviceId, queueSize, token, transport]
+  );
 
   useEffect(() => {
-    let invalidated = false;
-
-    (async function startOrUpdateQueue() {
+    async function fetchToken() {
       const queue = BIM.buildQueueFromState(state);
       const token = await BIM.getTokenFromQueue(queue);
-      if (!deviceId || !queue.length) return;
-      if (!transportRef.current) {
-        // This seems terrible, but how can I get a hold of the transport otherwise.
-        await withDevice(deviceId)((transport) => {
-          transportRef.current = transport;
-          return from([]);
-        }).toPromise();
-      }
+      setToken(token);
+    }
 
-      if (invalidated) return;
+    if (queueSize > lastSeenQueueSize.current) {
+      // If the queue is larger, our token is no longer valid and we need a new one.
+      fetchToken();
+    }
+    // Always update the last seen
+    lastSeenQueueSize.current = queueSize;
+  }, [queueSize, setToken, state]);
 
-      // @ts-ignore This is ugly.
-      return transportRef.current.constructor.queue(observable, token);
-    })();
+  useEffect(() => {
+    async function startJob(deviceId: string) {
+      await withDevice(deviceId)((transport) => {
+        setTransport(transport);
+        return observable.current;
+      })
+        .toPromise()
+        .then((_) => {
+          observable.current = new Subject().pipe(map(onEventDispatch));
+        })
+        .catch((error) => {
+          onEventDispatch({
+            type: "runError",
+            appOp: {},
+            error,
+          });
+        })
+        .finally(() => {
+          setTransport(undefined);
+        });
+    }
 
-    return () => {
-      invalidated = true;
-    };
-    // We don't want this to run again when anything in state changes, only when the queue does.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deviceId, installQueue, observable, uninstallQueue]);
+    if (shouldStartNewJob && deviceId) {
+      startJob(deviceId);
+    }
+  }, [deviceId, shouldStartNewJob, onEventDispatch, nextAppOp]);
 
-  if (!deviceId) return null;
-  return observable;
+  useEffect(() => {
+    if (!token || !transport) return;
+    transport.constructor.queue(observable.current, token);
+  }, [token, transport]);
+
+  return !!deviceId;
 };
 
 export default useBackgroundInstallSubject;

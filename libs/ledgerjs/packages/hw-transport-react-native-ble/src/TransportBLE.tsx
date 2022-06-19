@@ -55,6 +55,7 @@ class Ble extends Transport {
       Ble.log("apdu", `<= ${response}`);
       return Buffer.from(`${response}`, "hex");
     } catch (error) {
+      Ble.log("error");
       throw Ble.remapError(error);
     }
   };
@@ -72,17 +73,18 @@ class Ble extends Transport {
         },
       });
     } else if (event === "task") {
-      // Events emitted from inside a long running task
-      // if it's a queue we can't just say bulk progress, it needs to be ... atomic
-      // as in total progress not item progress. Also emit item consumed?
-      // Ble.log(event, type, data); // <-- If we had an observer we could emit there
       if (Ble.queueObserver) {
-        const progress = Math.round((data?.progress || 0) * 100) / 100;
-        Ble.queueObserver.next({
-          type,
-          appOp: { name: data.name, type: data.type },
-          progress: type === "runProgress" ? progress || 0 : undefined,
-        });
+        if (type === "runCompleted") {
+          // we've completed a queue, complete the subject
+          Ble.queueObserver.complete();
+        } else {
+          const progress = Math.round((data?.progress || 0) * 100) / 100;
+          Ble.queueObserver.next({
+            type,
+            appOp: { name: data.name, type: data.type },
+            progress: type === "runProgress" ? progress || 0 : undefined,
+          });
+        }
       }
     }
   });
@@ -115,10 +117,7 @@ class Ble extends Transport {
       Ble.log("disconnect first");
       await Ble.disconnect();
     }
-    const serviceUUID = "13d63400-2c97-0004-0000-4c6564676572"; // TODO should be automatic from native side
-
     Ble.log(`connecting to (${uuid})`);
-    Ble.log(`  serviceUUID (${serviceUUID})`);
 
     try {
       const _uuid = await NativeBle.connect(uuid, serviceUUID);
@@ -126,7 +125,19 @@ class Ble extends Transport {
       return new Ble(_uuid);
     } catch (error) {
       Ble.log("failed to connect to device");
-      throw Ble.remapError(error, { uuid });
+      if (Ble.queueObserver) {
+        Ble.log("emit error through observable");
+        Ble.queueObserver.next({
+          type: "runError",
+          event: {
+            appOp: {}, //Fixme?
+            error: Ble.remapError(error, { uuid }),
+          },
+        });
+      } else {
+        Ble.log("throw error without observable");
+        throw Ble.remapError(error, { uuid });
+      }
     }
   };
 
@@ -136,6 +147,8 @@ class Ble extends Transport {
     instances = [];
 
     await NativeBle.disconnect();
+    Ble.log("completing observer if needed");
+    Ble.queueObserver?.complete();
     Ble.log("disconnected");
     return true;
   };

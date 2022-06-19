@@ -21,6 +21,7 @@ import { CommonActions } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import useLatestFirmware from "../../hooks/useLatestFirmware";
 import { isFirmwareUpdateVersionSupported } from "../../logic/firmwareUpdate";
+import BluetoothTransport from "@ledgerhq/hw-transport-react-native-ble";
 
 export const MANAGER_TABS = {
   CATALOG: "CATALOG",
@@ -124,6 +125,7 @@ const Manager = ({
   const quitManager = useCallback(() => {
     navigation.dispatch(quitManagerAction);
     setQuitManagerAction(null);
+    BluetoothTransport.disconnect()
   }, [quitManagerAction, setQuitManagerAction, navigation]);
 
   const closeErrorModal = useCallback(() => setError(null), [setError]);

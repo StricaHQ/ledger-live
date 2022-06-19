@@ -485,24 +485,33 @@ export const updateAllProgress = (state: State): number => {
   return Math.max(0, Math.min((total - current) / total, 1));
 };
 // a series of operation to perform on the device for current state
-export const getActionPlan = (state: State): AppOp[] =>
-  state.uninstallQueue
-    .map(
-      (name) =>
-        <AppOp>{
-          type: "uninstall",
-          name,
-        }
-    )
-    .concat(
-      state.installQueue.map(
-        (name) =>
-          <AppOp>{
-            type: "install",
-            name,
-          }
-      )
-    );
+// Once we have registered an action as the `currentAction` we can't simply change the queue
+// and move it to a different position since it's potentially already running on the queue ie:
+// [i BTC, i DOGE, i ETH] turns into [u XRP, i BTC, i DOGE, iETH] once we set the `currentAppOp`
+// when receiving the `runStart` event. Because the next action would be intalling BTC again
+// instead of the corrent data plan which would be [i BTC, u XRP, i DOGE, i ETH]
+export const getActionPlan = (state: State): AppOp[] => {
+  const { currentAppOp, uninstallQueue, installQueue } = state;
+  const actionPlan: AppOp[] = currentAppOp ? [currentAppOp] : [];
+  uninstallQueue.forEach((name) => {
+    if (name !== currentAppOp?.name) {
+      actionPlan.push({
+        type: "uninstall",
+        name,
+      });
+    }
+  });
+  installQueue.forEach((name) => {
+    if (name !== currentAppOp?.name) {
+      actionPlan.push({
+        type: "install",
+        name,
+      });
+    }
+  });
+
+  return actionPlan;
+};
 // get next operation to perform
 export const getNextAppOp = (state: State): AppOp | null | undefined => {
   if (state.uninstallQueue.length) {

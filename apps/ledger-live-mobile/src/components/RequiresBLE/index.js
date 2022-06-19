@@ -44,6 +44,8 @@ class RequiresBLE extends Component<Props, State> {
 }
 
 export default function RequiresBLEWrapped({ children }: *) {
+  // FIXME BIM, we need to use this from the new transport.
+  return children;
   return (
     <RequiresLocationOnAndroid>
       <RequiresBLE>{children}</RequiresBLE>

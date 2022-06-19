@@ -50,7 +50,7 @@ target 'ledgerlivemobile' do
   
   # Double check if we need to be overriding this here
   pod 'Starscream', '~> 4.0.0'
-  pod 'BleTransport', :git => 'https://github.com/LedgerHQ/ios-ble.git', :commit => '344e1d44db4589efd32dead1ae0239aaee951d2f'
+  pod 'BleTransport', :git => 'https://github.com/LedgerHQ/ios-ble.git', :commit => '1b6a733b5ba3920bb0336636b789d500dfb45726'
   pod 'Bluejay', :git => 'https://github.com/DantePuglisi/bluejay.git', branch: 'fail-when-wrong-characteristic-property'
     
   # Enables Flipper.

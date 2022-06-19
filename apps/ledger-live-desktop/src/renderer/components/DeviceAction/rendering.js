@@ -151,9 +151,10 @@ const ErrorDescription = styled(Text).attrs({
 `;
 
 const ButtonContainer = styled(Box).attrs(p => ({
-  mt: 25,
   horizontal: true,
-}))``;
+}))`
+  margin-top: 25px;
+`;
 
 const TroubleshootingWrapper = styled.div`
   margin-top: auto;

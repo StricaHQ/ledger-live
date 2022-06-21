@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 
 import type { State } from "@ledgerhq/live-common/lib/apps";
 import styled, { useTheme } from "styled-components/native";
@@ -31,10 +31,6 @@ export default function AppProgressButton({
 }: Props) {
   const { colors } = useTheme();
   const progress = useAppInstallProgress(state, name);
-
-  useEffect(()=>{
-    console.log(name, progress)
-  },[name, progress, state])
 
   const color = updating || installing ? colors.primary.c80 : colors.error.c100;
 

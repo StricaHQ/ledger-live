@@ -582,7 +582,7 @@ PODS:
     - ZXingObjC/Core
 
 DEPENDENCIES:
-  - BleTransport (from `https://github.com/LedgerHQ/ios-ble.git`, commit `1b6a733b5ba3920bb0336636b789d500dfb45726`)
+  - BleTransport (from `https://github.com/LedgerHQ/ios-ble.git`, commit `aeba605ceae61b8539a3e3f6afaf47418536063c`)
   - Bluejay (from `https://github.com/DantePuglisi/bluejay.git`, branch `fail-when-wrong-characteristic-property`)
   - "boost (from `../../../node_modules/.pnpm/react-native@0.67.3_shn3lkepuadv4od4dudas6ijbq/node_modules/react-native/third-party-podspecs/boost.podspec`)"
   - "DoubleConversion (from `../../../node_modules/.pnpm/react-native@0.67.3_shn3lkepuadv4od4dudas6ijbq/node_modules/react-native/third-party-podspecs/DoubleConversion.podspec`)"
@@ -727,7 +727,7 @@ SPEC REPOS:
 
 EXTERNAL SOURCES:
   BleTransport:
-    :commit: 1b6a733b5ba3920bb0336636b789d500dfb45726
+    :commit: aeba605ceae61b8539a3e3f6afaf47418536063c
     :git: https://github.com/LedgerHQ/ios-ble.git
   Bluejay:
     :branch: fail-when-wrong-characteristic-property
@@ -885,7 +885,7 @@ EXTERNAL SOURCES:
 
 CHECKOUT OPTIONS:
   BleTransport:
-    :commit: 1b6a733b5ba3920bb0336636b789d500dfb45726
+    :commit: aeba605ceae61b8539a3e3f6afaf47418536063c
     :git: https://github.com/LedgerHQ/ios-ble.git
   Bluejay:
     :commit: ceba79e911449d7ab29aa234d749962befbc9d16
@@ -1005,6 +1005,6 @@ SPEC CHECKSUMS:
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a
   ZXingObjC: fdbb269f25dd2032da343e06f10224d62f537bdb
 
-PODFILE CHECKSUM: 6d64113cb6d36b7b24b284630c5f78d70ec39e95
+PODFILE CHECKSUM: 212bb82bf798efee259dfe69e9dcc05d71b20d9e
 
 COCOAPODS: 1.11.2

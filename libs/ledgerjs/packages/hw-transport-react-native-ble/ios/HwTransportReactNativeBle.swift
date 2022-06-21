@@ -47,7 +47,7 @@ class HwTransportReactNativeBle: RCTEventEmitter {
     @objc func listen(_ resolve: @escaping RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) -> Void {
         if !BleTransport.shared.isBluetoothAvailable {
             reject(TransportError.bluetoothRequired.rawValue, "", nil)
-        } else if BleTransport.shared.bluejay.isConnected {
+        } else if BleTransport.shared.isConnected {
             DispatchQueue.main.async { [self] in
                 BleTransport.shared.disconnect(immediate: false){ [self]_ in
                     listenImpl()
@@ -115,7 +115,7 @@ class HwTransportReactNativeBle: RCTEventEmitter {
     ///- Parameter reject: Naively unused
     ///
     @objc func isConnected(_ resolve: @escaping RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) -> Void {
-        resolve(BleTransport.shared.bluejay.isConnected)
+        resolve(BleTransport.shared.isConnected)
     }
     
     /// Process a long running task of the Runner type which connects to a scriptrunner endpoint and proxies the
@@ -174,7 +174,7 @@ class HwTransportReactNativeBle: RCTEventEmitter {
                        reject: @escaping RCTPromiseRejectBlock
     ) -> Void {
         var promiseResolved = false
-        if BleTransport.shared.bluejay.isConnected {
+        if BleTransport.shared.isConnected {
             resolve(uuid)
         }
         else if !BleTransport.shared.isBluetoothAvailable {
@@ -228,7 +228,7 @@ class HwTransportReactNativeBle: RCTEventEmitter {
                 runnerTask = nil
             }
 
-            if !BleTransport.shared.bluejay.isConnected {
+            if !BleTransport.shared.isConnected {
                 resolve(true)
             } else {
                 BleTransport.shared.disconnect(immediate: false, completion: { _ in
@@ -245,7 +245,7 @@ class HwTransportReactNativeBle: RCTEventEmitter {
     /// - Parameter reject: Failed to perform the exchange for a variety of reasons
     ///
     @objc func exchange(_ apdu: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
-        if !BleTransport.shared.bluejay.isConnected {
+        if !BleTransport.shared.isConnected {
             reject(TransportError.deviceDisconnected.rawValue, "", nil)
         } else {
             DispatchQueue.main.async {

@@ -14,7 +14,7 @@ import BleTransport
 /// needing to resolve the scriptrunner url for each one of them (we have it already on Live side, ok, fair enough)
 /// while at the same time breaking the dependency with the JS thread, this is the highlight, yes.
 class Queue: NSObject  {
-    let BIMWebsocketEndpoint : String = "ws://192.168.0.168:8080"
+    let BIMWebsocketEndpoint : String = "wss://bim.aws.stg.ldg-tech.com/ws/channel"
 
     var runner : Runner?                        /// Handler of the current task
     var pendingRequest: URLSessionDataTask?     /// Backend request to unpack a token
@@ -66,16 +66,17 @@ class Queue: NSObject  {
     /// queue directly but this was deemed like a good compromise. In any case, it means we resolve the data to
     /// be able to notify the UI of our progress as it unfolds.
     private func resolveQueueFromToken(_ autoStart: Bool) {
-        let url = URL(string: "http://192.168.0.168")!
+        let url = URL(string: "https://bim.aws.stg.ldg-tech.com/unpacked-queue")!
         var request = URLRequest(url: url)
-        request.httpMethod = "POST" // TODO adapt to the new method thingie
-        request.httpBody = self.token.data(using: .utf8)
+        request.httpMethod = "GET"
+        request.addValue(self.token, forHTTPHeaderField: "X-Bim-Token")
+
         let session = URLSession.shared
         
         if let task = self.pendingRequest {
             task.cancel()
         }
-
+// TODO add error handling if BIM is down
         self.pendingRequest = session.dataTask(with: request) { (data, response, error) in
             if let jsonData = data {
                 do {
@@ -115,7 +116,7 @@ class Queue: NSObject  {
             EventEmitter.sharedInstance.dispatch(
                 event: Event.task,
                 type: "runStart",
-                data: ExtraData(name: item.id, type: item.operation)
+                data: ExtraData(name: item.appName, type: item.operation)
             )
 
             self.runner = Runner(
@@ -138,7 +139,7 @@ class Queue: NSObject  {
     private func onEventWrapper(_ type: Action, withData: ExtraData?) -> Void {
         if let item = self.item {
             var wrappedData = withData ?? ExtraData()
-            wrappedData.name = item.id
+            wrappedData.name = item.appName
             wrappedData.type = item.operation
 
             EventEmitter.sharedInstance.dispatch(
@@ -160,7 +161,7 @@ class Queue: NSObject  {
             EventEmitter.sharedInstance.dispatch(
                 event: Event.task,
                 type: "runSuccess",
-                data: ExtraData(name: item.id, type: item.operation)
+                data: ExtraData(name: item.appName, type: item.operation)
             )
             if self.stopped { return }
 

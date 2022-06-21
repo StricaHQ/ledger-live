@@ -1,10 +1,9 @@
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useCallback, useRef, useState, useEffect } from "react";
 import { Subject } from "rxjs";
 import { map } from "rxjs/operators";
 import type { State } from "./types";
 import { withDevice } from "../hw/deviceAccess";
 import BIM from "../api/BIM";
-import { getNextAppOp } from "./logic";
 
 const useBackgroundInstallSubject = (
   deviceId: string | undefined,
@@ -13,8 +12,7 @@ const useBackgroundInstallSubject = (
 ): any => {
   // Whenever the queue changes, we need get a new token, but ONLY if this queue
   // change is because we are adding a new item and not because an item was consumed.
-  const observable: any = useRef(new Subject().pipe(map(onEventDispatch)));
-  const nextAppOp = useMemo(() => getNextAppOp(state), [state]);
+  const observable: any = useRef();
   const [transport, setTransport] = useState<any>();
   const [pendingTransport, setPendingTransport] = useState<boolean>(false);
   const [token, setToken] = useState<string>();
@@ -43,35 +41,43 @@ const useBackgroundInstallSubject = (
     lastSeenQueueSize.current = queueSize;
   }, [queueSize, setToken, state]);
 
-  useEffect(() => {
-    async function startJob(deviceId: string) {
+  const cleanUp = useCallback(()=>{
+    setPendingTransport(false);
+    setToken(undefined);
+    setTransport(undefined);
+  }, []);
+
+  const startNewJob = useCallback(() => {
+    let sub;
+    if (deviceId) {
       setPendingTransport(true);
-      await withDevice(deviceId)((transport) => {
+      sub = withDevice(deviceId)((transport) => {
+        observable.current = new Subject();
         setTransport(transport);
         setPendingTransport(false);
         return observable.current;
-      })
-        .toPromise()
-        .then((_) => {
-          observable.current = new Subject().pipe(map(onEventDispatch));
-        })
-        .catch((error) => {
+      }).subscribe({
+        next: onEventDispatch,
+        error: error => {
+          cleanUp();
           onEventDispatch({
             type: "runError",
             appOp: {},
             error,
           });
-        })
-        .finally(() => {
-          setPendingTransport(false);
-          setTransport(undefined);
-        });
+        },
+        complete: cleanUp,
+      });
     }
 
-    if (shouldStartNewJob && deviceId) {
-      startJob(deviceId);
+    return () => {
+      sub?.unsubscribe()
     }
-  }, [deviceId, shouldStartNewJob, onEventDispatch, nextAppOp]);
+  }, []);
+
+  useEffect(() => {
+    if (shouldStartNewJob) startNewJob()
+  }, [deviceId, shouldStartNewJob, onEventDispatch]);
 
   useEffect(() => {
     if (!token || !transport) return;

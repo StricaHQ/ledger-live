@@ -1,4 +1,5 @@
 import {
+  AccountShapeInfo,
   GetAccountShape,
   makeScanAccounts,
   mergeOps,
@@ -11,7 +12,12 @@ import Ada from "@cardano-foundation/ledgerjs-hw-app-cardano";
 import { str_to_path } from "@cardano-foundation/ledgerjs-hw-app-cardano/dist/utils";
 import { utils as TyphonUtils } from "@stricahq/typhonjs";
 import { APITransaction } from "./api/api-types";
-import { CardanoAccount, CardanoOutput, PaymentCredential } from "./types";
+import {
+  CardanoAccount,
+  CardanoOutput,
+  PaymentCredential,
+  ProtocolParams,
+} from "./types";
 import {
   getAccountChange,
   getAccountStakeCredential,
@@ -35,14 +41,19 @@ import type {
 } from "@ledgerhq/types-live";
 import { buildSubAccounts } from "./buildSubAccounts";
 import { calculateMinUtxoAmount } from "@stricahq/typhonjs/dist/utils/utils";
-import { listTokensForCryptoCurrency } from "../../currencies";
+import {
+  formatCurrencyUnit,
+  listTokensForCryptoCurrency,
+} from "../../currencies";
 import { getDelegationInfo } from "./api/getDelegationInfo";
 
 function mapTxToAccountOperation(
   tx: APITransaction,
   accountId: string,
   accountCredentialsMap: Record<string, PaymentCredential>,
-  subAccounts: Array<TokenAccount>
+  subAccounts: Array<TokenAccount>,
+  accountShapeInfo: AccountShapeInfo,
+  protocolParams: ProtocolParams
 ): Operation {
   const accountChange = getAccountChange(tx, accountCredentialsMap);
   const mainOperationType: OperationType = tx.certificate.stakeDelegations
@@ -62,13 +73,26 @@ function mapTxToAccountOperation(
     extra["memo"] = memo;
   }
 
+  let operationValue = accountChange.ada;
+  if (mainOperationType === "UNDELEGATE") {
+    operationValue = operationValue.minus(protocolParams.stakeKeyDeposit);
+    extra["depositRefund"] = formatCurrencyUnit(
+      accountShapeInfo.currency.units[0],
+      new BigNumber(protocolParams.stakeKeyDeposit),
+      {
+        showCode: true,
+        disableRounding: true,
+      }
+    );
+  }
+
   return {
     accountId,
     id: encodeOperationId(accountId, tx.hash, mainOperationType),
     hash: tx.hash,
     type: mainOperationType,
     fee: new BigNumber(tx.fees),
-    value: accountChange.ada.absoluteValue(),
+    value: operationValue.absoluteValue(),
     senders: tx.inputs.map((i) =>
       isHexString(i.address)
         ? TyphonUtils.getAddressFromHex(i.address).getBech32()
@@ -244,15 +268,6 @@ export const getAccountShape: GetAccountShape = async (
     accountCredentialsMap,
   }).filter((a) => !blacklistedTokenIds?.includes(a.token.id));
 
-  const newOperations = newTransactions.map((t) =>
-    mapTxToAccountOperation(t, accountId, accountCredentialsMap, subAccounts)
-  );
-
-  const operations = mergeOps(
-    Object.values(stableOperationsByIds),
-    newOperations
-  );
-
   const stakeCredential = getAccountStakeCredential(xpub, accountIndex);
   const networkParams = getNetworkParameters(currency.id);
   const freshAddresses = externalCredentials
@@ -278,6 +293,22 @@ export const getAccountShape: GetAccountShape = async (
         false
       )
     : new BigNumber(0);
+
+  const newOperations = newTransactions.map((t) =>
+    mapTxToAccountOperation(
+      t,
+      accountId,
+      accountCredentialsMap,
+      subAccounts,
+      info,
+      cardanoNetworkInfo.protocolParams
+    )
+  );
+
+  const operations = mergeOps(
+    Object.values(stableOperationsByIds),
+    newOperations
+  );
 
   return {
     id: accountId,

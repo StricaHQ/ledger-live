@@ -2,7 +2,7 @@ import { BigNumber } from "bignumber.js";
 import { Observable } from "rxjs";
 import { FeeNotLoaded } from "@ledgerhq/errors";
 
-import type { CardanoAccount, CardanoResources, Transaction } from "./types";
+import { CardanoAccount, CardanoResources, Transaction } from "./types";
 
 import { withDevice } from "../../hw/deviceAccess";
 import { encodeOperationId } from "../../operation";
@@ -38,6 +38,8 @@ import {
   SignedOperation,
   SignOperationEvent,
 } from "@ledgerhq/types-live";
+import { formatCurrencyUnit } from "../../currencies";
+import { getAccountUnit } from "../../account";
 
 const buildOptimisticOperation = (
   account: CardanoAccount,
@@ -96,15 +98,28 @@ const buildOptimisticOperation = (
     }
   }
 
+  let operationValue = accountChange;
   const extra = {};
   if (memo) {
     extra["memo"] = memo;
   }
+  if (opType === "UNDELEGATE") {
+    operationValue = accountChange.minus(account.cardanoResources.protocolParams.stakeKeyDeposit);
+    extra["depositRefund"] = formatCurrencyUnit(
+      getAccountUnit(account),
+      new BigNumber(account.cardanoResources.protocolParams.stakeKeyDeposit),
+      {
+        showCode: true,
+        disableRounding: true,
+      },
+    );
+  }
+
   const op: Operation = {
     id: encodeOperationId(account.id, transactionHash, opType),
     hash: transactionHash,
     type: opType,
-    value: accountChange.absoluteValue(),
+    value: operationValue.absoluteValue(),
     fee: transaction.getFee(),
     blockHash: undefined,
     blockHeight: null,
@@ -151,7 +166,11 @@ const signTx = (
 ) => {
   witnesses.forEach(witness => {
     const [, , , chainType, index] = witness.path;
-    const publicKey = accountKey.derive(chainType).derive(index).toPublicKey().toBytes();
+    const publicKey = accountKey
+      .derive(chainType)
+      .derive(index)
+      .toPublicKey()
+      .toBytes();
     const vKeyWitness: TyphonTypes.VKeyWitness = {
       signature: Buffer.from(witness.witnessSignatureHex, "hex"),
       publicKey: Buffer.from(publicKey),

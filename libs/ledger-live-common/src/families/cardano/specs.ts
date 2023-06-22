@@ -1,6 +1,6 @@
 import expect from "expect";
-import type { AppSpec } from "../../bot/types";
-import type { CardanoAccount, CardanoResources, Transaction } from "./types";
+import { AppSpec } from "../../bot/types";
+import { CardanoAccount, CardanoResources, Transaction } from "./types";
 import { botTest, genericTestDestination, pickSiblings } from "../../bot/specs";
 import { getCryptoCurrencyById } from "@ledgerhq/cryptoassets";
 import { DeviceModelId } from "@ledgerhq/devices";
@@ -161,13 +161,17 @@ const cardano: AppSpec<Transaction> = {
           ],
         };
       },
-      test: ({ operation, transaction }): void => {
+      test: ({ operation, transaction, account }): void => {
         botTest("check delegate operation type", () => {
           expect(operation.type).toEqual("DELEGATE");
         });
 
-        botTest("op value should be equal to fees", () => {
-          expect(operation.value.toString()).toEqual(transaction.fees?.toString());
+        botTest("op value should be equal to fees plus deposit", () => {
+          expect(operation.value).toEqual(
+            transaction.fees
+              ?.plus((account as CardanoAccount).cardanoResources.protocolParams.stakeKeyDeposit)
+              .toString(),
+          );
         });
       },
     },
@@ -220,13 +224,19 @@ const cardano: AppSpec<Transaction> = {
           ],
         };
       },
-      test: ({ operation, transaction }): void => {
+      test: ({ operation, transaction, account }): void => {
+        const stakeKeyDeposit = new BigNumber(
+          (account as CardanoAccount).cardanoResources.protocolParams.stakeKeyDeposit,
+        );
+
         botTest("check undelegate operation type", () => {
           expect(operation.type).toEqual("UNDELEGATE");
         });
 
-        botTest("op value should be equal to fees", () => {
-          expect(operation.value.toString()).toEqual(transaction.fees?.toString());
+        botTest("deposit minus op value should be equal to fees", () => {
+          expect(stakeKeyDeposit.minus(operation.value.toString())).toEqual(
+            transaction.fees?.toString(),
+          );
         });
       },
     },

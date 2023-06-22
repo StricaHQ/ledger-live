@@ -1,5 +1,5 @@
-import type { DeviceAction } from "../../bot/types";
-import type { Transaction } from "./types";
+import { DeviceAction } from "../../bot/types";
+import { Transaction } from "./types";
 import { getAccountStakeCredential, getBipPathString } from "./logic";
 import { deviceActionFlow, formatDeviceAmount, SpeculosButton } from "../../bot/specs";
 

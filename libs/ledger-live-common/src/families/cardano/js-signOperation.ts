@@ -166,11 +166,7 @@ const signTx = (
 ) => {
   witnesses.forEach(witness => {
     const [, , , chainType, index] = witness.path;
-    const publicKey = accountKey
-      .derive(chainType)
-      .derive(index)
-      .toPublicKey()
-      .toBytes();
+    const publicKey = accountKey.derive(chainType).derive(index).toPublicKey().toBytes();
     const vKeyWitness: TyphonTypes.VKeyWitness = {
       signature: Buffer.from(witness.witnessSignatureHex, "hex"),
       publicKey: Buffer.from(publicKey),

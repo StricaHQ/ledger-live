@@ -11,12 +11,13 @@ import BigNumber from "bignumber.js";
 import Ada from "@cardano-foundation/ledgerjs-hw-app-cardano";
 import { str_to_path } from "@cardano-foundation/ledgerjs-hw-app-cardano/dist/utils";
 import { utils as TyphonUtils } from "@stricahq/typhonjs";
-import { APITransaction } from "./api/api-types";
+import { APITransaction, HashType } from "./api/api-types";
 import {
   CardanoAccount,
   CardanoOutput,
   PaymentCredential,
   ProtocolParams,
+  StakeCredential,
 } from "./types";
 import {
   getAccountChange,
@@ -37,19 +38,17 @@ import { getTransactions } from "./api/getTransactions";
 import type { Operation, OperationType, TokenAccount } from "@ledgerhq/types-live";
 import { buildSubAccounts } from "./buildSubAccounts";
 import { calculateMinUtxoAmount } from "@stricahq/typhonjs/dist/utils/utils";
-import {
-  formatCurrencyUnit,
-  listTokensForCryptoCurrency,
-} from "../../currencies";
+import { formatCurrencyUnit, listTokensForCryptoCurrency } from "../../currencies";
 import { getDelegationInfo } from "./api/getDelegationInfo";
 
 function mapTxToAccountOperation(
   tx: APITransaction,
   accountId: string,
   accountCredentialsMap: Record<string, PaymentCredential>,
+  stakeCredential: StakeCredential,
   subAccounts: Array<TokenAccount>,
   accountShapeInfo: AccountShapeInfo,
-  protocolParams: ProtocolParams
+  protocolParams: ProtocolParams,
 ): Operation {
   const accountChange = getAccountChange(tx, accountCredentialsMap);
   const mainOperationType: OperationType = tx.certificate.stakeDelegations.length
@@ -69,16 +68,42 @@ function mapTxToAccountOperation(
   }
 
   let operationValue = accountChange.ada;
-  if (mainOperationType === "UNDELEGATE") {
-    operationValue = operationValue.minus(protocolParams.stakeKeyDeposit);
-    extra["depositRefund"] = formatCurrencyUnit(
-      accountShapeInfo.currency.units[0],
-      new BigNumber(protocolParams.stakeKeyDeposit),
-      {
-        showCode: true,
-        disableRounding: true,
-      }
+  if (tx.certificate.stakeDeRegistrations.length) {
+    const walletDeRegistration = tx.certificate.stakeDeRegistrations.find(
+      c =>
+        c.stakeCredential.type === HashType.ADDRESS &&
+        c.stakeCredential.key === stakeCredential.key,
     );
+    if (walletDeRegistration) {
+      operationValue = operationValue.minus(protocolParams.stakeKeyDeposit);
+      extra["depositRefund"] = formatCurrencyUnit(
+        accountShapeInfo.currency.units[0],
+        new BigNumber(protocolParams.stakeKeyDeposit),
+        {
+          showCode: true,
+          disableRounding: true,
+        },
+      );
+    }
+  }
+
+  if (tx.withdrawals && tx.withdrawals.length) {
+    const walletWithdraw = tx.withdrawals.find(
+      w =>
+        w.stakeCredential.type === HashType.ADDRESS &&
+        w.stakeCredential.key === stakeCredential.key,
+    );
+    if (walletWithdraw) {
+      operationValue = operationValue.minus(walletWithdraw.amount);
+      extra["delegationRewards"] = formatCurrencyUnit(
+        accountShapeInfo.currency.units[0],
+        new BigNumber(walletWithdraw.amount),
+        {
+          showCode: true,
+          disableRounding: true,
+        },
+      );
+    }
   }
 
   return {
@@ -88,10 +113,8 @@ function mapTxToAccountOperation(
     type: mainOperationType,
     fee: new BigNumber(tx.fees),
     value: operationValue.absoluteValue(),
-    senders: tx.inputs.map((i) =>
-      isHexString(i.address)
-        ? TyphonUtils.getAddressFromHex(i.address).getBech32()
-        : i.address
+    senders: tx.inputs.map(i =>
+      isHexString(i.address) ? TyphonUtils.getAddressFromHex(i.address).getBech32() : i.address,
     ),
     recipients: tx.outputs.map(o =>
       isHexString(o.address) ? TyphonUtils.getAddressFromHex(o.address).getBech32() : o.address,
@@ -235,7 +258,7 @@ export const getAccountShape: GetAccountShape = async (info, { blacklistedTokenI
   );
 
   const utxos = prepareUtxos(newTransactions, stableUtxos, accountCredentialsMap);
-  const accountBalance = utxos.reduce((total, u) => total.plus(u.amount), new BigNumber(0));
+  let accountBalance = utxos.reduce((total, u) => total.plus(u.amount), new BigNumber(0));
   const tokenBalance = mergeTokens(utxos.map(u => u.tokens).flat());
   const subAccounts = buildSubAccounts({
     initialAccount,
@@ -260,6 +283,9 @@ export const getAccountShape: GetAccountShape = async (info, { blacklistedTokenI
     }));
   const cardanoNetworkInfo = await getNetworkInfo(initialAccount as CardanoAccount, currency);
   const delegationInfo = await getDelegationInfo(currency, stakeCredential.key);
+  if (delegationInfo?.rewards) {
+    accountBalance = accountBalance.plus(delegationInfo.rewards);
+  }
 
   const minAdaBalanceForTokens = tokenBalance.length
     ? calculateMinUtxoAmount(
@@ -269,21 +295,19 @@ export const getAccountShape: GetAccountShape = async (info, { blacklistedTokenI
       )
     : new BigNumber(0);
 
-  const newOperations = newTransactions.map((t) =>
+  const newOperations = newTransactions.map(t =>
     mapTxToAccountOperation(
       t,
       accountId,
       accountCredentialsMap,
+      stakeCredential,
       subAccounts,
       info,
-      cardanoNetworkInfo.protocolParams
-    )
+      cardanoNetworkInfo.protocolParams,
+    ),
   );
 
-  const operations = mergeOps(
-    Object.values(stableOperationsByIds),
-    newOperations
-  );
+  const operations = mergeOps(Object.values(stableOperationsByIds), newOperations);
 
   return {
     id: accountId,

@@ -3,7 +3,6 @@ import invariant from "invariant";
 import { useDispatch } from "react-redux";
 import { useTranslation } from "react-i18next";
 import styled from "styled-components";
-import { Account } from "@ledgerhq/types-live";
 import { urls } from "~/config/urls";
 import { openURL } from "~/renderer/linking";
 import { openModal } from "~/renderer/actions/modals";
@@ -19,7 +18,6 @@ import { CardanoAccount } from "@ledgerhq/live-common/families/cardano/types";
 
 type Props = {
   account: CardanoAccount;
-  parentAccount: Account | undefined | null;
 };
 
 const Wrapper = styled(Box).attrs(() => ({
@@ -30,7 +28,7 @@ const Wrapper = styled(Box).attrs(() => ({
   align-items: center;
 `;
 
-const Delegation = ({ account, parentAccount }: Props) => {
+const Delegation = ({ account }: Props) => {
   const dispatch = useDispatch();
   const { t } = useTranslation();
 
@@ -49,7 +47,7 @@ const Delegation = ({ account, parentAccount }: Props) => {
       {delegation && delegation.poolId ? (
         <>
           <Header />
-          <Row delegation={delegation} account={account} parentAccount={parentAccount} />
+          <Row delegation={delegation} account={account} />
         </>
       ) : (
         <Wrapper horizontal>
@@ -75,9 +73,8 @@ const Delegation = ({ account, parentAccount }: Props) => {
               onClick={() => {
                 dispatch(
                   openModal("MODAL_CARDANO_REWARDS_INFO", {
-                    parentAccount,
                     account,
-                    name: "MODAL_CARDANO_REWARDS_INFO"
+                    name: "MODAL_CARDANO_REWARDS_INFO",
                   }),
                 );
               }}

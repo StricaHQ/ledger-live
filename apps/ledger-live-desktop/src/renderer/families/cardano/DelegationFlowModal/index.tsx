@@ -13,15 +13,9 @@ const INITIAL_STATE: { stepId: StepId } = {
 
 export type DelegationModalProps = {
   account: CardanoAccount;
-  parentAccount: CardanoAccount | undefined | null;
 };
 
-class DelegationModal extends PureComponent<
-  {
-    name: string;
-  },
-  State
-> {
+class DelegationModal extends PureComponent<DelegationModalProps, State> {
   state = INITIAL_STATE;
   handleReset = () => {
     return this.setState({
@@ -36,20 +30,18 @@ class DelegationModal extends PureComponent<
 
   render() {
     const { stepId } = this.state;
-    const { name } = this.props;
     const isModalLocked = ["connectDevice", "confirmation"].includes(stepId);
     return (
       <Modal
-        name={name}
+        name="MODAL_CARDANO_DELEGATE"
         centered
-        refocusWhenChange={stepId}
         onHide={this.handleReset}
         preventBackdropClick={isModalLocked}
         width={550}
         render={({ onClose, data }) => (
           <Body
             stepId={stepId}
-            name={name}
+            name="MODAL_CARDANO_DELEGATE"
             onClose={onClose}
             onChangeStepId={this.handleStepChange}
             params={data || {}}

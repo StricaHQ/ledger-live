@@ -11,25 +11,19 @@ import { CardanoAccount } from "@ledgerhq/live-common/families/cardano/types";
 export type DelegationInfoModalProps = {
   name: string;
   account: CardanoAccount;
-  parentAccount: CardanoAccount | undefined | null;
 };
 
-export default function CardanoEarnRewardsInfoModal({
-  name,
-  account,
-  parentAccount,
-}: DelegationInfoModalProps) {
+export default function CardanoEarnRewardsInfoModal({ name, account }: DelegationInfoModalProps) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const onNext = useCallback(() => {
     dispatch(closeModal(name));
     dispatch(
       openModal("MODAL_CARDANO_DELEGATE", {
-        parentAccount,
         account,
       }),
     );
-  }, [parentAccount, account, dispatch, name]);
+  }, [account, dispatch, name]);
   const onLearnMore = useCallback(() => {
     openURL(urls.cardanoStakingRewards);
   }, []);

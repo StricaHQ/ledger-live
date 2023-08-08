@@ -1,6 +1,4 @@
-import { getMainAccount } from "@ledgerhq/live-common/account/index";
 import { CardanoAccount } from "@ledgerhq/live-common/families/cardano/types";
-import { Account, AccountLike } from "@ledgerhq/types-live";
 import invariant from "invariant";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
@@ -9,23 +7,21 @@ import { openModal } from "~/renderer/actions/modals";
 import IconCoins from "~/renderer/icons/Coins";
 
 type Props = {
-  account: AccountLike;
-  parentAccount: Account | undefined | null;
+  account: CardanoAccount;
 };
 
-const AccountHeaderActions = ({ account, parentAccount }: Props) => {
+const AccountHeaderActions = ({ account }: Props) => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
-  const mainAccount = getMainAccount(account, parentAccount);
-  const { cardanoResources } = mainAccount as CardanoAccount;
+  const { cardanoResources } = account as CardanoAccount;
   invariant(cardanoResources, "cardano account expected");
   const disableStakeButton =
     (cardanoResources.delegation && !!cardanoResources.delegation.poolId) ||
-    mainAccount.balance.isZero();
+    account.balance.isZero();
   const disabledLabel =
     cardanoResources.delegation && cardanoResources.delegation.poolId
       ? t("cardano.delegation.assetsAlreadyStaked")
-      : mainAccount.balance.isZero()
+      : account.balance.isZero()
       ? t("cardano.delegation.addFundsToStake")
       : "";
   const onClick = useCallback(() => {
@@ -36,7 +32,7 @@ const AccountHeaderActions = ({ account, parentAccount }: Props) => {
       }),
     );
   }, [dispatch, account]);
-  if (parentAccount) return null;
+  if (account.type !== "Account") return null;
   return [
     {
       key: "Stake",

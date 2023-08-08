@@ -13,15 +13,9 @@ const INITIAL_STATE: { stepId: StepId } = {
 
 export type UnDelegationModalProps = {
   account: CardanoAccount;
-  parentAccount: CardanoAccount | undefined | null;
 };
 
-class UndelegationModal extends PureComponent<
-  {
-    name: string;
-  },
-  State
-> {
+class UndelegationModal extends PureComponent<UnDelegationModalProps, State> {
   state = INITIAL_STATE;
   handleReset = () =>
     this.setState({
@@ -35,20 +29,17 @@ class UndelegationModal extends PureComponent<
 
   render() {
     const { stepId } = this.state;
-    const { name } = this.props;
     const isModalLocked = ["connectDevice", "confirmation"].includes(stepId);
     return (
       <Modal
-        name={name}
         centered
-        refocusWhenChange={stepId}
         onHide={this.handleReset}
         preventBackdropClick={isModalLocked}
         width={550}
         render={({ onClose, data }) => (
           <Body
             stepId={stepId}
-            name={name}
+            name="MODAL_CARDANO_UNDELEGATE"
             onClose={onClose}
             onChangeStepId={this.handleStepChange}
             params={data || {}}

@@ -14,10 +14,11 @@ import IconChartLine from "~/renderer/icons/ChartLine";
 import Header from "./Header";
 import Row from "./Row";
 import TableContainer, { TableHeader } from "~/renderer/components/TableContainer";
+import { AccountLike } from "@ledgerhq/types-live";
 import { CardanoAccount } from "@ledgerhq/live-common/families/cardano/types";
 
 type Props = {
-  account: CardanoAccount;
+  account: AccountLike;
 };
 
 const Wrapper = styled(Box).attrs(() => ({
@@ -33,7 +34,7 @@ const Delegation = ({ account }: Props) => {
   const { t } = useTranslation();
 
   if (account.type !== "Account") return null;
-  const { cardanoResources } = account;
+  const { cardanoResources } = account as CardanoAccount;
   invariant(cardanoResources, "cardano account expected");
   const delegation = cardanoResources.delegation;
   return (
@@ -47,7 +48,7 @@ const Delegation = ({ account }: Props) => {
       {delegation && delegation.poolId ? (
         <>
           <Header />
-          <Row delegation={delegation} account={account} />
+          <Row delegation={delegation} account={account as CardanoAccount} />
         </>
       ) : (
         <Wrapper horizontal>
@@ -73,7 +74,7 @@ const Delegation = ({ account }: Props) => {
               onClick={() => {
                 dispatch(
                   openModal("MODAL_CARDANO_REWARDS_INFO", {
-                    account,
+                    account: account as CardanoAccount,
                     name: "MODAL_CARDANO_REWARDS_INFO",
                   }),
                 );

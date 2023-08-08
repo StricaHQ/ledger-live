@@ -1,20 +1,24 @@
 import React, { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useDispatch } from "react-redux";
-import { Account, AccountLike } from "@ledgerhq/types-live";
 import { openModal, closeModal } from "~/renderer/actions/modals";
 import EarnRewardsInfoModal from "~/renderer/components/EarnRewardsInfoModal";
 import { urls } from "~/config/urls";
 import { openURL } from "~/renderer/linking";
 import LinkWithExternalIcon from "~/renderer/components/LinkWithExternalIcon";
+import { CardanoAccount } from "@ledgerhq/live-common/families/cardano/types";
 
-type Props = {
+export type DelegationInfoModalProps = {
   name: string;
-  account: AccountLike;
-  parentAccount: Account | undefined | null;
+  account: CardanoAccount;
+  parentAccount: CardanoAccount | undefined | null;
 };
 
-export default function CardanoEarnRewardsInfoModal({ name, account, parentAccount }: Props) {
+export default function CardanoEarnRewardsInfoModal({
+  name,
+  account,
+  parentAccount,
+}: DelegationInfoModalProps) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const onNext = useCallback(() => {

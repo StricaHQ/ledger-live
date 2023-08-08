@@ -8,7 +8,7 @@ import React, { useCallback } from "react";
 import { Trans } from "react-i18next";
 import styled from "styled-components";
 import Box from "~/renderer/components/Box";
-import ValidatorRow, { ValidatorRowProps } from "~/renderer/components/Delegation/ValidatorRow";
+import ValidatorRow from "~/renderer/components/Delegation/ValidatorRow";
 import Text from "~/renderer/components/Text";
 import Check from "~/renderer/icons/Check";
 import { openURL } from "~/renderer/linking";
@@ -45,6 +45,8 @@ function CardanoPoolRow({ pool, active, onClick, unit, currency }: Props) {
   const poolCost = formatCurrencyUnit(unit, new BigNumber(pool.cost), formatConfig);
   return (
     <StyledValidatorRow
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore next-line
       onClick={onClick}
       key={pool.poolId}
       validator={{
@@ -107,6 +109,9 @@ const ChosenMark = styled(Check).attrs<{
 }>(p => ({
   color: p.active ? p.theme.colors.palette.primary.main : "transparent",
   size: 14,
-}))``;
+}))<{
+  active?: boolean;
+  size?: number;
+}>``;
 
 export default CardanoPoolRow;

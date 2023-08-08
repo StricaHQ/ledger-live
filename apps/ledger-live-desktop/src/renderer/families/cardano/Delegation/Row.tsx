@@ -6,7 +6,6 @@ import { CardanoDelegation } from "@ledgerhq/live-common/families/cardano/types"
 import FormattedVal from "~/renderer/components/FormattedVal";
 import Text from "~/renderer/components/Text";
 import Ellipsis from "~/renderer/components/Ellipsis";
-import { ThemedComponent } from "~/renderer/styles/StyleProvider";
 import ContextMenu from "./ContextMenu";
 
 type Props = {
@@ -15,9 +14,9 @@ type Props = {
   parentAccount: Account | undefined | null;
 };
 
-const Wrapper: ThemedComponent<{
+const Wrapper = styled.div<{
   isPending: boolean;
-}> = styled.div`
+}>`
   display: flex;
   flex-direction: row;
   padding: 16px 20px;
@@ -36,7 +35,7 @@ const CTA = styled.div`
   justify-content: flex-end;
 `;
 
-const Value: ThemedComponent<{}> = styled.div`
+const Value = styled.div`
   width: 30%;
   box-sizing: border-box;
   justify-content: flex-start;

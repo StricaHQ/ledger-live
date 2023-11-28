@@ -2512,6 +2512,7 @@
       "commission": "Commission",
       "stakeKeyRegistrationDeposit": "Stake key registration deposit",
       "delegatingTo": "Delegating to",
+      "requiredAmountForStaking": "Please ensure you have atleast 3 ADA for staking",
       "flow": {
         "title": "Delegate",
         "steps": {

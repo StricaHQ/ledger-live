@@ -1,5 +1,6 @@
 import invariant from "invariant";
 import React from "react";
+import { BigNumber } from "bignumber.js";
 import { Trans } from "react-i18next";
 import { StepProps } from "../types";
 import { getAccountBridge } from "@ledgerhq/live-common/bridge/index";
@@ -69,15 +70,17 @@ export function StepDelegationFooter({
 }: StepProps) {
   invariant(account, "account required");
   const { errors } = status;
-  const canNext = !bridgePending && !errors.amount && transaction;
+  const { cardanoResources } = account;
+  const delegation = cardanoResources.delegation;
+  const notEnoughAdaForStaking = delegation && delegation.poolId ? false : new BigNumber(account.balance).isLessThan("3000000");
+  const canNext = !(notEnoughAdaForStaking || !(!bridgePending && !errors.amount && transaction));
   const displayError = errors.amount?.message === "CardanoNotEnoughFunds" ? errors.amount : "";
-
   return (
     <Box horizontal alignItems="center" flow={2} grow>
-      {displayError ? (
+      {notEnoughAdaForStaking || displayError ? (
         <Box grow>
           <Text fontSize={13} color="alertRed">
-            <TranslatedError error={displayError} field="title" />
+            {notEnoughAdaForStaking ? <Trans i18nKey="cardano.delegation.requiredAmountForStaking" /> : <TranslatedError error={displayError} field="title" />}
           </Text>
         </Box>
       ) : (

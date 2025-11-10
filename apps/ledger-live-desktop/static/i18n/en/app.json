@@ -2772,6 +2772,7 @@
     "unDelegation": {
       "message": "By un-delegating you will not receive any rewards for current and upcoming epochs",
       "refund": "Stake Registration Deposit Refund",
+      "delegationSelfTransaction": "dRep Delegation Self Transaction",
       "flow": {
         "title": "Undelegate",
         "steps": {
@@ -2789,6 +2790,17 @@
               "cta": "View details"
             },
             "broadcastError": "Your transaction may have failed. Please wait a moment then check the transaction history before trying again."
+          }
+        }
+      },
+      "selfTransactionFlow": {
+        "title": "dRep Delegation Self Transaction",
+        "steps": {
+          "starter": {
+            "description": [
+              "You currently have unclaimed staking rewards in your account. It is required to delegate to a dRep to claim staking rewards and to un-delegate your wallet.",
+              "This step will delegate your account to Abstain Auto dRep on the Cardano network. Once processed, you can un-delegate your wallet as usual."
+            ]
           }
         }
       }

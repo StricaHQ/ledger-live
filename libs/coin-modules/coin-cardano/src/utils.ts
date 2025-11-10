@@ -1,11 +1,11 @@
 // the IDs of ledger stake pools to shows
 // Ledger by Figment 4
 export const DEFAULT_SELECTED_POOL_ID: string =
-  "1f550e7b0c9ec67887859b182af4b8e8e08c1728c47344f2deb9424c";
+  "032a04334a846fdf542fd5633c9b3928998691b8276e004facbc8af1";
 // the IDs of ledger stake pools to shows in lld and llm
 export const LEDGER_POOL_IDS: Array<string> = [
-  "a314a18528d00c5fbd067ecb4a212cf2f307c83d2c08f44a11ebebf6", // Ledger by Figment 1
-  "4a9c9902c9538da900b10b716d5d1b214487455fdb06028b32ffa180", // Ledger by Figment 2
-  "c726c9da5615d5f9f6858c25bb13f81c4741eccd08ce32f3414f323f", // Ledger by Figment 3
+  "78ba4fcdb9a4dfce0d980107b4a9d21d9f7b285b33ff3295e18f7eb5", // Ledger by Figment 1
+  "01318fd609b64303bb57b1a455109779f4127a9835cf91eec6cd61bf", // Ledger by Figment 2
+  "8701dd5447d5d6fa8d5afdc4d509b2545459ed7ed269c29db2610a53", // Ledger by Figment 3
   DEFAULT_SELECTED_POOL_ID, // Ledger by Figment 4
 ];

@@ -8,6 +8,7 @@ import Modal, { ModalBody } from "~/renderer/components/Modal";
 import Box from "~/renderer/components/Box";
 import Text from "~/renderer/components/Text";
 import Button from "~/renderer/components/Button";
+import BigNumber from "bignumber.js";
 
 export type CardanoUndelegateSelfTxInfoModalProps = {
   account: CardanoAccount;
@@ -23,6 +24,7 @@ export default function CardanoUndelegateSelfTxInfoModal({
       openModal("MODAL_SEND", {
         account,
         recipient: account.freshAddress,
+        amount: BigNumber(2000000),
       }),
     );
   }, [account, dispatch]);

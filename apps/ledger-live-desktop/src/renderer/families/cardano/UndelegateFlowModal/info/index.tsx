@@ -13,25 +13,27 @@ import BigNumber from "bignumber.js";
 export type CardanoUndelegateSelfTxInfoModalProps = {
   account: CardanoAccount;
 };
+// used for internal transaction
+const DEFAULT_TX_AMOUNT = 2000000;
 
 export default function CardanoUndelegateSelfTxInfoModal({
   account,
 }: CardanoUndelegateSelfTxInfoModalProps) {
   const dispatch = useDispatch();
   const onNext = useCallback(() => {
-    dispatch(closeModal("MODAL_CARDANO_UNDELIGATE_SELF_TX_INFO"));
+    dispatch(closeModal("MODAL_CARDANO_UNDELEGATE_SELF_TX_INFO"));
     dispatch(
       openModal("MODAL_SEND", {
         account,
         recipient: account.freshAddress,
-        amount: BigNumber(2000000),
+        amount: BigNumber(DEFAULT_TX_AMOUNT),
       }),
     );
   }, [account, dispatch]);
 
   return (
     <Modal
-      name="MODAL_CARDANO_UNDELIGATE_SELF_TX_INFO"
+      name="MODAL_CARDANO_UNDELEGATE_SELF_TX_INFO"
       centered
       render={({ onClose }) => (
         <ModalBody

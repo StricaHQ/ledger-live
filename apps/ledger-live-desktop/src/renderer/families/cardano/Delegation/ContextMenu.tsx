@@ -35,10 +35,10 @@ const ContextMenu = ({ account }: Props) => {
 
   const hasRewardsWithNoDrepDelegation =
     account.cardanoResources.delegation?.rewards.isGreaterThan(0) &&
-    account.cardanoResources.delegation?.dRepHex == undefined;
+    account.cardanoResources.delegation?.dRepHex === undefined;
 
   const modalNameForUndelegate = hasRewardsWithNoDrepDelegation
-    ? "MODAL_CARDANO_UNDELIGATE_SELF_TX_INFO"
+    ? "MODAL_CARDANO_UNDELEGATE_SELF_TX_INFO"
     : "MODAL_CARDANO_UNDELEGATE";
 
   const items = [

@@ -12,11 +12,12 @@ import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { ScreenName } from "~/const";
 
 let mockRewardsValue = new BigNumber("0");
+let mockDepositValue = "2000000";
 
 const mockAccount: CardanoAccount = {
   type: "Account",
   id: "test-cardano-account",
-  seedIdentifier: "seed",  
+  seedIdentifier: "seed",
   derivationMode: "",
   index: 0,
   freshAddress: "addr1test",
@@ -69,7 +70,7 @@ const mockAccount: CardanoAccount = {
         status: true,
         poolId: "00000000000000000000000000000000000000000000000000000001",
         dRepHex: undefined,
-        deposit: "2000000",
+        deposit: mockDepositValue,
         stakeHex: "stake1test",
       };
     },
@@ -146,11 +147,7 @@ const TestNavigator = () => (
   <QueryClientProvider client={new QueryClient()}>
     <Stack.Navigator initialRouteName="Dummy">
       <Stack.Screen name="Dummy" component={DummyScreen} />
-      <Stack.Screen
-        name="FlowRoot"
-        component={UndelegationFlow}
-        options={{ headerShown: false }}
-      />
+      <Stack.Screen name="FlowRoot" component={UndelegationFlow} options={{ headerShown: false }} />
     </Stack.Navigator>
   </QueryClientProvider>
 );
@@ -171,19 +168,31 @@ describe("UndelegationFlow Integration", () => {
 
   it("should navigate through the undelegation flow without rewards", async () => {
     mockRewardsValue = new BigNumber("0");
+    mockDepositValue = "0"; // no deposit refund when not previously registered
     render(<TestNavigator />, { ...INITIAL_STATE });
 
-    // Step 1: Summary Screen -> Validate Continue button is present
+    // Summary screen should render and Continue button must be enabled
     const continueBtn = await screen.findByText(/continue/i);
     expect(continueBtn).toBeVisible();
+
+    // undelegation message should be visible
+    const undelegationMsg = await screen.findByText(
+      /By un-delegating you will not receive any rewards/i,
+    );
+    expect(undelegationMsg).toBeVisible();
   });
 
   it("should navigate through the undelegation flow with rewards", async () => {
     mockRewardsValue = new BigNumber("1000000"); // 1 ADA reward
+    mockDepositValue = "2000000"; // 2 ADA stake key deposit refund
     render(<TestNavigator />, { ...INITIAL_STATE });
 
-    // Step 1: Summary Screen -> Validate Continue button is present
+    // Continue button must still be present and enabled
     const continueBtn = await screen.findByText(/continue/i);
     expect(continueBtn).toBeVisible();
+
+    // Stake key registration deposit refund field must appear (reward-funded path)
+    const depositRefundLabel = await screen.findByText(/Stake Key Registration deposit refund/i);
+    expect(depositRefundLabel).toBeVisible();
   });
 });

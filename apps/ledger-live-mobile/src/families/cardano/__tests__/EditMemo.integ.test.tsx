@@ -12,10 +12,13 @@ jest.mock("~/helpers/navigationHelpers", () => ({
   popToScreen: jest.fn(),
 }));
 
-const mockAccount = getCardanoAccountFixture({});
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockAccount: any = getCardanoAccountFixture({});
 mockAccount.id = "test-cardano-account";
 mockAccount.name = "Cardano Test";
 mockAccount.currency.id = "cardano";
+import { CardanoResources } from "@ledgerhq/coin-cardano/types";
+
 mockAccount.cardanoResources.protocolParams = {
   minFeeA: "44",
   minFeeB: "155381",
@@ -27,7 +30,7 @@ mockAccount.cardanoResources.protocolParams = {
   collateralPercent: 150,
   maxCollateralInputs: 3,
   coinsPerUtxoByte: "4310",
-} as any;
+} as unknown as CardanoResources["protocolParams"];
 Object.defineProperty(mockAccount.cardanoResources, "delegation", {
   get() {
     return {
@@ -37,7 +40,7 @@ Object.defineProperty(mockAccount.cardanoResources, "delegation", {
       dRepHex: undefined,
       deposit: "0",
       stakeHex: "stake1test",
-    } as any;
+    } as unknown as CardanoResources["delegation"];
   },
 });
 

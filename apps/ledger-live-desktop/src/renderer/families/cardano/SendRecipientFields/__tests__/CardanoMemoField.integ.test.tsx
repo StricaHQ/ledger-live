@@ -1,9 +1,10 @@
 import React from "react";
+import { CardanoAccount, Transaction, TransactionStatus } from "@ledgerhq/coin-cardano/types";
 import { render, screen, cleanup, fireEvent } from "tests/testSetup";
 import BigNumber from "bignumber.js";
 import { setSupportedCurrencies } from "@ledgerhq/live-common/currencies/index";
 import { server } from "tests/server";
-import { handlers } from "../../__integrations__/handlers";
+import { handlers } from "../../__tests__/handlers";
 import SendRecipientFields from "../index";
 import { getCardanoAccountFixture } from "@ledgerhq/coin-cardano/fixtures/accounts";
 
@@ -11,9 +12,9 @@ setSupportedCurrencies(["cardano"]);
 
 const mockAccount = getCardanoAccountFixture({});
 mockAccount.id = "mock:1:cardano:true_cardano_0:";
-mockAccount.name = "Cardano Account";
 mockAccount.currency.id = "cardano";
-mockAccount.cardanoResources = {} as any;
+
+mockAccount.cardanoResources = {} as unknown as CardanoAccount["cardanoResources"];
 
 const mockTransaction = {
   family: "cardano",
@@ -49,9 +50,9 @@ describe("CardanoMemoField Integration", () => {
     const onChange = jest.fn();
     render(
       <SendRecipientFields.component
-        account={mockAccount as any}
-        transaction={mockTransaction as any}
-        status={mockStatus as any}
+        account={mockAccount as unknown as CardanoAccount}
+        transaction={mockTransaction as unknown as Transaction}
+        status={mockStatus as unknown as TransactionStatus}
         onChange={onChange}
       />,
     );
@@ -72,9 +73,9 @@ describe("CardanoMemoField Integration", () => {
     const transactionWithMemo = { ...mockTransaction, memo: "existing memo" };
     const { container } = render(
       <SendRecipientFields.component
-        account={mockAccount as any}
-        transaction={transactionWithMemo as any}
-        status={mockStatus as any}
+        account={mockAccount as unknown as CardanoAccount}
+        transaction={transactionWithMemo as unknown as Transaction}
+        status={mockStatus as unknown as TransactionStatus}
         onChange={jest.fn()}
       />,
     );
@@ -92,9 +93,9 @@ describe("CardanoMemoField Integration", () => {
     };
     render(
       <SendRecipientFields.component
-        account={mockAccount as any}
-        transaction={mockTransaction as any}
-        status={errorStatus as any}
+        account={mockAccount as unknown as CardanoAccount}
+        transaction={mockTransaction as unknown as Transaction}
+        status={errorStatus as unknown as TransactionStatus}
         onChange={jest.fn()}
       />,
     );

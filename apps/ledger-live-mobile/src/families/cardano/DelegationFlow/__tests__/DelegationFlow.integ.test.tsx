@@ -5,7 +5,7 @@ import { State } from "~/reducers/types";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { component as DelegationFlow } from "../index";
 import { server } from "@tests/server";
-import { handlers } from "../../__integrations__/handlers";
+import { handlers } from "../../__tests__/handlers";
 import BigNumber from "bignumber.js";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { getCardanoAccountFixture } from "@ledgerhq/coin-cardano/fixtures/accounts";
@@ -64,7 +64,8 @@ afterAll(() => {
   server.close();
 });
 
-const mockAccount = getCardanoAccountFixture({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockAccount: any = getCardanoAccountFixture({
   delegation: {
     rewards: new BigNumber("0"),
     status: false,

@@ -4,7 +4,7 @@ import BigNumber from "bignumber.js";
 import { setSupportedCurrencies } from "@ledgerhq/live-common/currencies/index";
 import { DeviceModelId } from "@ledgerhq/devices";
 import { server } from "tests/server";
-import { handlers } from "../../__integrations__/handlers";
+import { handlers } from "../../__tests__/handlers";
 import DelegationFlowModal from "../index";
 
 setSupportedCurrencies(["cardano"]);
@@ -259,25 +259,27 @@ describe("Cardano DelegationFlowModal Integration", () => {
   });
 
   it("should display a bridge error if transaction preparation fails", async () => {
-    jest.spyOn(require("@ledgerhq/live-common/bridge/useBridgeTransaction"), "default").mockReturnValue({
-      transaction: {
-        mode: "delegate",
-        poolId: "00000000000000000000000000000000000000000000000000000001",
-        protocolParams: getMockAccountData().cardanoResources.protocolParams,
-      },
-      setTransaction: jest.fn(),
-      updateTransaction: jest.fn(),
-      account: getMockAccountData(),
-      status: {
-        errors: {},
-        warnings: {},
-        estimatedFees: new BigNumber("200000"),
-        amount: new BigNumber("0"),
-      },
-      bridgeError: new Error("Network connection failed"),
-      bridgePending: false,
-    });
-    
+    jest
+      .spyOn(require("@ledgerhq/live-common/bridge/useBridgeTransaction"), "default")
+      .mockReturnValue({
+        transaction: {
+          mode: "delegate",
+          poolId: "00000000000000000000000000000000000000000000000000000001",
+          protocolParams: getMockAccountData().cardanoResources.protocolParams,
+        },
+        setTransaction: jest.fn(),
+        updateTransaction: jest.fn(),
+        account: getMockAccountData(),
+        status: {
+          errors: {},
+          warnings: {},
+          estimatedFees: new BigNumber("200000"),
+          amount: new BigNumber("0"),
+        },
+        bridgeError: new Error("Network connection failed"),
+        bridgePending: false,
+      });
+
     const mockAccountData = getMockAccountData();
     const initialState = {
       devices: {

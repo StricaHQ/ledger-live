@@ -4,7 +4,7 @@ import BigNumber from "bignumber.js";
 import { setSupportedCurrencies } from "@ledgerhq/live-common/currencies/index";
 import { DeviceModelId } from "@ledgerhq/devices";
 import { server } from "tests/server";
-import { handlers } from "../../__integrations__/handlers";
+import { handlers } from "../../__tests__/handlers";
 import UndelegateFlowModal from "../index";
 import { openModal } from "~/renderer/actions/modals";
 import CardanoUndelegateSelfTxInfoModal from "../info/index";
@@ -190,16 +190,23 @@ describe("Cardano Undelegation Integration", () => {
     });
 
     it("should display a bridge error if transaction preparation fails", async () => {
-      jest.spyOn(require("@ledgerhq/live-common/bridge/useBridgeTransaction"), "default").mockReturnValue({
-        transaction: { mode: "undelegate" },
-        setTransaction: jest.fn(),
-        updateTransaction: jest.fn(),
-        account: getMockAccountData(),
-        status: { errors: {}, warnings: {}, estimatedFees: new BigNumber("0"), amount: new BigNumber("0") },
-        bridgeError: new Error("Bridge network error"),
-        bridgePending: false,
-      });
-      
+      jest
+        .spyOn(require("@ledgerhq/live-common/bridge/useBridgeTransaction"), "default")
+        .mockReturnValue({
+          transaction: { mode: "undelegate" },
+          setTransaction: jest.fn(),
+          updateTransaction: jest.fn(),
+          account: getMockAccountData(),
+          status: {
+            errors: {},
+            warnings: {},
+            estimatedFees: new BigNumber("0"),
+            amount: new BigNumber("0"),
+          },
+          bridgeError: new Error("Bridge network error"),
+          bridgePending: false,
+        });
+
       mockRewardsValue = new BigNumber("0");
       const { mockAccountData, initialState } = setup();
       render(<UndelegateFlowModal account={mockAccountData as never} />, {

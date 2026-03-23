@@ -5,7 +5,7 @@ import { State } from "~/reducers/types";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { component as UndelegationFlow } from "../index";
 import { server } from "@tests/server";
-import { handlers } from "../../__integrations__/handlers";
+import { handlers } from "../../__tests__/handlers";
 import BigNumber from "bignumber.js";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { ScreenName } from "~/const";
@@ -14,7 +14,8 @@ import { getCardanoAccountFixture } from "@ledgerhq/coin-cardano/fixtures/accoun
 let mockRewardsValue = new BigNumber("0");
 let mockDepositValue = "2000000";
 
-const mockAccount = getCardanoAccountFixture({});
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockAccount: any = getCardanoAccountFixture({});
 mockAccount.id = "test-cardano-account";
 mockAccount.name = "Cardano Delegated Account";
 mockAccount.currency.id = "cardano";

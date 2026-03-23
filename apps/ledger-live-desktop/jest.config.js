@@ -38,6 +38,7 @@ const moduleNameMapper = {
   ...pathsToModuleNameMapper(compilerOptions.paths),
   "~/(.*)": "<rootDir>/src/$1",
   "^@features/(.*)$": "<rootDir>/../../features/$1/src",
+  "^@ledgerhq/coin-cardano/(.*)$": "<rootDir>/../../libs/coin-modules/coin-cardano/src/$1",
   "^@ledgerhq/(lumen-ui-react|lumen-design-core)$": "<rootDir>/node_modules/@ledgerhq/$1",
   "\\.(jpg|ico|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga|lottie)$":
     "<rootDir>/fileMock.js",

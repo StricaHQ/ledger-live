@@ -6,9 +6,9 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { component as DelegationFlow } from "../index";
 import { server } from "@tests/server";
 import { handlers } from "../../__integrations__/handlers";
-import { CardanoAccount } from "@ledgerhq/live-common/families/cardano/types";
 import BigNumber from "bignumber.js";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
+import { getCardanoAccountFixture } from "@ledgerhq/coin-cardano/fixtures/accounts";
 
 jest.mock("LLM/hooks/useAccountScreen", () => ({
   useAccountScreen: () => ({ account: mockAccount, parentAccount: null }),
@@ -64,66 +64,31 @@ afterAll(() => {
   server.close();
 });
 
-const mockAccount: CardanoAccount = {
-  type: "Account",
-  id: "test-cardano-account",
-  seedIdentifier: "seed",
-  derivationMode: "",
-  index: 0,
-  freshAddress: "addr1test",
-  freshAddressPath: "",
-  freshAddresses: [],
-  name: "Cardano Test Account",
-  starred: false,
-  used: false,
-  balance: new BigNumber("100000000000"), // 100k ADA
-  spendableBalance: new BigNumber("100000000000"),
-  creationDate: new Date(),
-  blockHeight: 100,
-  currency: {
-    id: "cardano",
-    name: "Cardano",
-    type: "CryptoCurrency",
-    ticker: "ADA",
-    family: "cardano",
-    color: "#000",
-    managerAppName: "Cardano ADA",
-    explorerViews: [],
-    units: [{ name: "ADA", code: "ADA", magnitude: 6 }],
-  },
-  operationsCount: 0,
-  operations: [],
-  pendingOperations: [],
-  lastSyncDate: new Date(),
-  balanceHistoryCache: {
-    HOUR: { latestDate: null, balances: [] },
-    DAY: { latestDate: null, balances: [] },
-    WEEK: { latestDate: null, balances: [] },
-  },
-  swapHistory: [],
-  cardanoResources: {
-    protocolParams: {
-      minFeeA: "44",
-      minFeeB: "155381",
-      minUtxo: "1000000",
-      poolDeposit: "500000000",
-      keyDeposit: "2000000",
-      maxTxSize: 16384,
-      maxValSize: 5000,
-      collateralPercent: 150,
-      maxCollateralInputs: 3,
-      coinsPerUtxoByte: "4310",
-    },
-    delegation: {
-      rewards: new BigNumber("0"),
-      status: false,
-      poolId: null,
-      dRepHex: undefined,
-      deposit: "0",
-      stakeHex: "stake1test",
-    },
-  },
-} as unknown as CardanoAccount;
+const mockAccount = getCardanoAccountFixture({
+  delegation: {
+    rewards: new BigNumber("0"),
+    status: false,
+    poolId: null,
+    dRepHex: undefined,
+    deposit: "0",
+    stakeHex: "stake1test",
+  } as any,
+});
+mockAccount.id = "test-cardano-account";
+mockAccount.name = "Cardano Test Account";
+mockAccount.currency.id = "cardano";
+mockAccount.cardanoResources.protocolParams = {
+  minFeeA: "44",
+  minFeeB: "155381",
+  minUtxo: "1000000",
+  poolDeposit: "500000000",
+  keyDeposit: "2000000",
+  maxTxSize: 16384,
+  maxValSize: 5000,
+  collateralPercent: 150,
+  maxCollateralInputs: 3,
+  coinsPerUtxoByte: "4310",
+} as any;
 import { ScreenName } from "~/const";
 
 const Stack = createNativeStackNavigator();
@@ -173,15 +138,42 @@ describe("DelegationFlow Integration", () => {
     const validatorName = await screen.findByText("LBF1 - Ledger by Figment 1");
     expect(validatorName).toBeVisible();
 
-    // Simulate clicking on the circle/box to change the validator
-    // Actually, onChangePool is triggered when we press the row. Wait, we can test just clicking it.
-    // The "cardano-delegation-summary-validator" text works as a proxy if we just want to verify we rendered the summary.
-
     // Continue is pressed
     const continueButton = await screen.findByTestId("cardano-summary-continue-button");
     expect(continueButton).toBeVisible();
+  });
 
-    // We can't really navigate to SelectDevice natively as it starts hardware interactions
-    // but we can verify the Summary screen works with MSW data.
+  it("should display a bridge error if transaction preparation fails", async () => {
+    jest
+      .spyOn(require("@ledgerhq/live-common/bridge/useBridgeTransaction"), "default")
+      .mockReturnValue({
+        transaction: {
+          family: "cardano",
+          mode: "delegate",
+          poolId: "00000000000000000000000000000000000000000000000000000001",
+          protocolParams: mockAccount.cardanoResources?.protocolParams,
+        },
+        setTransaction: jest.fn(),
+        updateTransaction: jest.fn(),
+        account: mockAccount,
+        status: {
+          errors: {},
+          warnings: {},
+          estimatedFees: new BigNumber("200000"),
+          amount: new BigNumber("0"),
+        },
+        bridgeError: new Error("Bridge network error"),
+        bridgePending: false,
+      });
+
+    const { user } = render(<TestNavigator />, { ...INITIAL_STATE });
+
+    // Step 1: Starter Screen -> Start delegation
+    const startButton = await screen.findByTestId("cardano-delegation-start-button");
+    await user.press(startButton);
+
+    // Check if error boundary or alert shows up containing the error text
+    const errorText = await screen.findByText(/Bridge network error/i);
+    expect(errorText).toBeVisible();
   });
 });

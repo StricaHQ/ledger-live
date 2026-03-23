@@ -5,22 +5,15 @@ import { setSupportedCurrencies } from "@ledgerhq/live-common/currencies/index";
 import { server } from "tests/server";
 import { handlers } from "../../__integrations__/handlers";
 import SendRecipientFields from "../index";
+import { getCardanoAccountFixture } from "@ledgerhq/coin-cardano/fixtures/accounts";
 
 setSupportedCurrencies(["cardano"]);
 
-const mockAccount = {
-  type: "Account",
-  id: "mock:1:cardano:true_cardano_0:",
-  name: "Cardano Account",
-  currency: {
-    id: "cardano",
-    name: "Cardano",
-    type: "CryptoCurrency",
-    ticker: "ADA",
-    units: [{ name: "ada", code: "ADA", magnitude: 6 }],
-  },
-  cardanoResources: {},
-};
+const mockAccount = getCardanoAccountFixture({});
+mockAccount.id = "mock:1:cardano:true_cardano_0:";
+mockAccount.name = "Cardano Account";
+mockAccount.currency.id = "cardano";
+mockAccount.cardanoResources = {} as any;
 
 const mockTransaction = {
   family: "cardano",
@@ -88,5 +81,24 @@ describe("CardanoMemoField Integration", () => {
 
     const memoInput = container.querySelector("input");
     expect(memoInput).toHaveValue("existing memo");
+  });
+
+  it("should display a warning if the memo is invalid", () => {
+    const errorStatus = {
+      ...mockStatus,
+      errors: {
+        transaction: new Error("Memo is too long"),
+      },
+    };
+    render(
+      <SendRecipientFields.component
+        account={mockAccount as any}
+        transaction={mockTransaction as any}
+        status={errorStatus as any}
+        onChange={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByText(/Memo is too long/i)).toBeInTheDocument();
   });
 });

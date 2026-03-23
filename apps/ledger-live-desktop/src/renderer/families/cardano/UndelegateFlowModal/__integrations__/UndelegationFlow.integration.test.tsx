@@ -188,6 +188,26 @@ describe("Cardano Undelegation Integration", () => {
       const deviceAction = await screen.findByTestId("device-action");
       expect(deviceAction).toBeInTheDocument();
     });
+
+    it("should display a bridge error if transaction preparation fails", async () => {
+      jest.spyOn(require("@ledgerhq/live-common/bridge/useBridgeTransaction"), "default").mockReturnValue({
+        transaction: { mode: "undelegate" },
+        setTransaction: jest.fn(),
+        updateTransaction: jest.fn(),
+        account: getMockAccountData(),
+        status: { errors: {}, warnings: {}, estimatedFees: new BigNumber("0"), amount: new BigNumber("0") },
+        bridgeError: new Error("Bridge network error"),
+        bridgePending: false,
+      });
+      
+      mockRewardsValue = new BigNumber("0");
+      const { mockAccountData, initialState } = setup();
+      render(<UndelegateFlowModal account={mockAccountData as never} />, {
+        initialState,
+      });
+
+      expect(await screen.findByText(/Bridge network error/i)).toBeInTheDocument();
+    });
   });
 
   // ── MODAL_CARDANO_UNDELEGATE_SELF_TX_INFO (rewards → self tx → MODAL_SEND) ──

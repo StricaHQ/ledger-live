@@ -2,13 +2,19 @@ import "@ledgerhq/live-common/families/cardano/setup";
 import React, { useEffect } from "react";
 import { render, screen } from "@tests/test-renderer";
 import { State } from "~/reducers/types";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import {
+  createNativeStackNavigator,
+  NativeStackNavigationProp,
+} from "@react-navigation/native-stack";
 import { component as DelegationFlow } from "../index";
 import { server } from "@tests/server";
 import { handlers } from "../../__tests__/handlers";
 import BigNumber from "bignumber.js";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { getCardanoAccountFixture } from "@ledgerhq/coin-cardano/fixtures/accounts";
+import { CardanoAccount } from "@ledgerhq/live-common/families/cardano/types";
+import { NavigatorScreenParams } from "@react-navigation/native";
+import { CardanoDelegationFlowParamList } from "../types";
 
 jest.mock("LLM/hooks/useAccountScreen", () => ({
   useAccountScreen: () => ({ account: mockAccount, parentAccount: null }),
@@ -64,38 +70,32 @@ afterAll(() => {
   server.close();
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mockAccount: any = getCardanoAccountFixture({
+const mockAccount: CardanoAccount = getCardanoAccountFixture({
   delegation: {
     rewards: new BigNumber("0"),
     status: false,
-    poolId: null,
+    poolId: undefined,
     dRepHex: undefined,
     deposit: "0",
-    stakeHex: "stake1test",
-  } as any,
+  },
 });
 mockAccount.id = "test-cardano-account";
 mockAccount.name = "Cardano Test Account";
 mockAccount.currency.id = "cardano";
-mockAccount.cardanoResources.protocolParams = {
-  minFeeA: "44",
-  minFeeB: "155381",
-  minUtxo: "1000000",
-  poolDeposit: "500000000",
-  keyDeposit: "2000000",
-  maxTxSize: 16384,
-  maxValSize: 5000,
-  collateralPercent: 150,
-  maxCollateralInputs: 3,
-  coinsPerUtxoByte: "4310",
-} as any;
 import { ScreenName } from "~/const";
 
-const Stack = createNativeStackNavigator();
+type RootStackParamList = {
+  Dummy: undefined;
+  FlowRoot: NavigatorScreenParams<CardanoDelegationFlowParamList>;
+};
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const DummyScreen = ({ navigation }: any) => {
+const Stack = createNativeStackNavigator<RootStackParamList>();
+
+const DummyScreen = ({
+  navigation,
+}: {
+  navigation: NativeStackNavigationProp<RootStackParamList>;
+}) => {
   useEffect(() => {
     navigation.navigate("FlowRoot", {
       screen: ScreenName.CardanoDelegationStarted,

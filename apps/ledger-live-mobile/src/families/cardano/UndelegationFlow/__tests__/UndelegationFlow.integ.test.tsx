@@ -2,7 +2,10 @@ import "@ledgerhq/live-common/families/cardano/setup";
 import React, { useEffect } from "react";
 import { render, screen } from "@tests/test-renderer";
 import { State } from "~/reducers/types";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import {
+  createNativeStackNavigator,
+  NativeStackNavigationProp,
+} from "@react-navigation/native-stack";
 import { component as UndelegationFlow } from "../index";
 import { server } from "@tests/server";
 import { handlers } from "../../__tests__/handlers";
@@ -10,39 +13,26 @@ import BigNumber from "bignumber.js";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { ScreenName } from "~/const";
 import { getCardanoAccountFixture } from "@ledgerhq/coin-cardano/fixtures/accounts";
+import { CardanoAccount } from "@ledgerhq/live-common/families/cardano/types";
+import { NavigatorScreenParams } from "@react-navigation/native";
+import { CardanoUndelegationFlowParamList } from "../types";
+import * as useBridgeTransaction from "@ledgerhq/live-common/bridge/useBridgeTransaction";
 
 let mockRewardsValue = new BigNumber("0");
 let mockDepositValue = "2000000";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mockAccount: any = getCardanoAccountFixture({});
+const mockAccount: CardanoAccount = getCardanoAccountFixture({
+  delegation: {
+    rewards: mockRewardsValue,
+    status: true,
+    poolId: "00000000000000000000000000000000000000000000000000000001",
+    dRepHex: undefined,
+    deposit: mockDepositValue,
+  },
+});
 mockAccount.id = "test-cardano-account";
 mockAccount.name = "Cardano Delegated Account";
 mockAccount.currency.id = "cardano";
-mockAccount.cardanoResources.protocolParams = {
-  minFeeA: "44",
-  minFeeB: "155381",
-  minUtxo: "1000000",
-  poolDeposit: "500000000",
-  keyDeposit: "2000000",
-  maxTxSize: 16384,
-  maxValSize: 5000,
-  collateralPercent: 150,
-  maxCollateralInputs: 3,
-  coinsPerUtxoByte: "4310",
-} as any;
-Object.defineProperty(mockAccount.cardanoResources, "delegation", {
-  get() {
-    return {
-      rewards: mockRewardsValue,
-      status: true,
-      poolId: "00000000000000000000000000000000000000000000000000000001",
-      dRepHex: undefined,
-      deposit: mockDepositValue,
-      stakeHex: "stake1test",
-    } as any;
-  },
-});
 
 jest.mock("LLM/hooks/useAccountScreen", () => ({
   useAccountScreen: () => ({ account: mockAccount, parentAccount: null }),
@@ -97,10 +87,18 @@ afterAll(() => {
   server.close();
 });
 
-const Stack = createNativeStackNavigator();
+type RootStackParamList = {
+  Dummy: undefined;
+  FlowRoot: NavigatorScreenParams<CardanoUndelegationFlowParamList>;
+};
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const DummyScreen = ({ navigation }: any) => {
+const Stack = createNativeStackNavigator<RootStackParamList>();
+
+const DummyScreen = ({
+  navigation,
+}: {
+  navigation: NativeStackNavigationProp<RootStackParamList>;
+}) => {
   useEffect(() => {
     navigation.navigate("FlowRoot", {
       screen: ScreenName.CardanoUndelegationSummary,
@@ -136,6 +134,15 @@ describe("UndelegationFlow Integration", () => {
   it("should navigate through the undelegation flow without rewards", async () => {
     mockRewardsValue = new BigNumber("0");
     mockDepositValue = "0"; // no deposit refund when not previously registered
+    mockAccount.cardanoResources.delegation = {
+      rewards: mockRewardsValue,
+      status: true,
+      poolId: "00000000000000000000000000000000000000000000000000000001",
+      dRepHex: undefined,
+      deposit: mockDepositValue,
+      ticker: undefined,
+      name: undefined,
+    };
     render(<TestNavigator />, { ...INITIAL_STATE });
 
     // Summary screen should render and Continue button must be enabled
@@ -152,6 +159,15 @@ describe("UndelegationFlow Integration", () => {
   it("should navigate through the undelegation flow with rewards", async () => {
     mockRewardsValue = new BigNumber("1000000"); // 1 ADA reward
     mockDepositValue = "2000000"; // 2 ADA stake key deposit refund
+    mockAccount.cardanoResources.delegation = {
+      rewards: mockRewardsValue,
+      status: true,
+      poolId: "00000000000000000000000000000000000000000000000000000001",
+      dRepHex: undefined,
+      deposit: mockDepositValue,
+      ticker: undefined,
+      name: undefined,
+    };
     render(<TestNavigator />, { ...INITIAL_STATE });
 
     // Continue button must still be present and enabled
@@ -164,7 +180,7 @@ describe("UndelegationFlow Integration", () => {
   });
 
   it("should display an error if undelegation bridging fails", async () => {
-    jest.spyOn(require("@ledgerhq/live-common/bridge/useBridgeTransaction"), "default").mockReturnValue({
+    jest.spyOn(useBridgeTransaction, "default").mockReturnValue({
       transaction: {
         family: "cardano",
         mode: "undelegate",
@@ -185,7 +201,16 @@ describe("UndelegationFlow Integration", () => {
 
     mockRewardsValue = new BigNumber("0");
     mockDepositValue = "0";
-    
+    mockAccount.cardanoResources.delegation = {
+      rewards: mockRewardsValue,
+      status: true,
+      poolId: "00000000000000000000000000000000000000000000000000000001",
+      dRepHex: undefined,
+      deposit: mockDepositValue,
+      ticker: undefined,
+      name: undefined,
+    };
+
     render(<TestNavigator />, { ...INITIAL_STATE });
 
     const errorText = await screen.findByText(/Undelegation network error/i);

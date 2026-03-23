@@ -6,6 +6,7 @@ import { DeviceModelId } from "@ledgerhq/devices";
 import { server } from "tests/server";
 import { handlers } from "../../__tests__/handlers";
 import UndelegateFlowModal from "../index";
+import { getCardanoAccountFixture } from "@ledgerhq/coin-cardano/fixtures/accounts";
 import { openModal } from "~/renderer/actions/modals";
 import CardanoUndelegateSelfTxInfoModal from "../info/index";
 
@@ -17,48 +18,32 @@ jest.mock("~/renderer/actions/modals", () => ({
   closeModal: jest.fn().mockReturnValue({ type: "CLOSE_MODAL" }),
 }));
 
-let mockRewardsValue = new BigNumber("5000000");
+const mockRewardsValue = new BigNumber("5000000");
 
-const getMockAccountData = () => ({
-  type: "Account",
-  id: "mock:1:cardano:true_cardano_0:",
-  seedIdentifier: "mock",
-  name: "Cardano Delegated",
-  starred: false,
-  used: false,
-  derivationMode: "cardano",
-  index: 0,
-  freshAddress: "addr1_delegated",
-  freshAddressPath: "1852'/1815'/0'/0/0",
-  blockHeight: 100000,
-  creationDate: new Date("2023-01-01T00:00:00.000Z"),
-  operationsCount: 10,
-  operations: [],
-  pendingOperations: [],
-  currencyId: "cardano",
-  currency: {
-    id: "cardano",
-    name: "Cardano",
-    type: "CryptoCurrency",
-    ticker: "ADA",
-    units: [{ name: "ada", code: "ADA", magnitude: 6 }],
-  },
-  unitMagnitude: 6,
-  lastSyncDate: new Date("2023-10-01T00:00:00.000Z"),
-  balance: new BigNumber("105000000"),
-  spendableBalance: new BigNumber("105000000"),
-  cardanoResources: {
-    delegation: {
-      poolId: "pool1_ledger",
-      status: "active",
-      rewards: mockRewardsValue,
-      dRepHex: undefined,
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getMockAccountData = (): any => {
+  const account: any = getCardanoAccountFixture({
+    delegation: undefined,
+  });
+  account.id = "mock:1:cardano:true_cardano_0:";
+  account.name = "Cardano Delegated";
+  account.freshAddress = "addr1_delegated";
+
+  Object.defineProperty(account.cardanoResources, "delegation", {
+    get() {
+      return {
+        rewards: mockRewardsValue,
+        status: true,
+        poolId: "pool1_ledger",
+        dRepHex: undefined,
+        deposit: "2000000",
+        stakeHex: "stake1test",
+      } as any;
     },
-    protocolParams: {
-      stakeKeyDeposit: "2000000",
-    },
-  },
-});
+  });
+
+  return account;
+};
 
 jest.mock("@ledgerhq/live-common/bridge/useBridgeTransaction", () => ({
   __esModule: true,
@@ -148,7 +133,6 @@ describe("Cardano Undelegation Integration", () => {
 
   describe("UndelegateFlowModal", () => {
     it("should navigate through the undelegation flow without rewards", async () => {
-      mockRewardsValue = new BigNumber("0");
       const { mockAccountData, initialState } = setup();
       const { user } = render(<UndelegateFlowModal account={mockAccountData as never} />, {
         initialState,
@@ -169,7 +153,6 @@ describe("Cardano Undelegation Integration", () => {
     });
 
     it("should navigate through the undelegation flow with rewards", async () => {
-      mockRewardsValue = new BigNumber("5000000"); // 5 ADA
       const { mockAccountData, initialState } = setup();
       const { user } = render(<UndelegateFlowModal account={mockAccountData as never} />, {
         initialState,
@@ -207,9 +190,8 @@ describe("Cardano Undelegation Integration", () => {
           bridgePending: false,
         });
 
-      mockRewardsValue = new BigNumber("0");
       const { mockAccountData, initialState } = setup();
-      render(<UndelegateFlowModal account={mockAccountData as never} />, {
+      render(<UndelegateFlowModal account={mockAccountData} />, {
         initialState,
       });
 

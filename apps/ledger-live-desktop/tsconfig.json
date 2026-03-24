@@ -12,8 +12,7 @@
     "paths": {
       "~/*": ["src/*"],
       "tests/*": ["tests/*"],
-      "LLD/*": ["src/mvvm/*"],
-      "@ledgerhq/coin-cardano/*": ["../../libs/coin-modules/coin-cardano/src/*"]
+      "LLD/*": ["src/mvvm/*"]
     },
     "outDir": "dist",
     "typeRoots": ["index-types.d.ts", "./node_modules/@types", "./node_modules/@testing-library"]

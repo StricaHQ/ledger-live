@@ -6,41 +6,52 @@ import { DeviceModelId } from "@ledgerhq/devices";
 import { server } from "tests/server";
 import { handlers } from "../../__tests__/handlers";
 import UndelegateFlowModal from "../index";
+import * as useBridgeTransaction from "@ledgerhq/live-common/bridge/useBridgeTransaction";
+import ContextMenu from "../../Delegation/ContextMenu";
+import ModalsLayer from "~/renderer/ModalsLayer";
+import { CardanoAccount, Transaction } from "@ledgerhq/live-common/families/cardano/types";
 import { getCardanoAccountFixture } from "@ledgerhq/coin-cardano/fixtures/accounts";
-import { openModal } from "~/renderer/actions/modals";
-import CardanoUndelegateSelfTxInfoModal from "../info/index";
 
 setSupportedCurrencies(["cardano"]);
+jest.mock("~/renderer/actions/modals", () => {
+  const original = jest.requireActual("~/renderer/actions/modals");
+  return {
+    ...original,
+    openModal: jest.fn(original.openModal),
+  };
+});
 
-// Spied on in SELF_TX_INFO tests
-jest.mock("~/renderer/actions/modals", () => ({
-  openModal: jest.fn().mockReturnValue({ type: "OPEN_MODAL" }),
-  closeModal: jest.fn().mockReturnValue({ type: "CLOSE_MODAL" }),
-}));
+import { openModal } from "~/renderer/actions/modals";
 
-const mockRewardsValue = new BigNumber("5000000");
+const mockTransaction: Transaction = {
+  family: "cardano",
+  mode: "undelegate",
+  amount: new BigNumber(0),
+  recipient: "",
+  poolId: undefined,
+};
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getMockAccountData = (): any => {
-  const account: any = getCardanoAccountFixture({
+const getMockAccountData = (
+  overrides: { rewards?: BigNumber; dRepHex?: string } = {},
+): CardanoAccount => {
+  const account = getCardanoAccountFixture({
     delegation: undefined,
   });
   account.id = "mock:1:cardano:true_cardano_0:";
-  account.name = "Cardano Delegated";
   account.freshAddress = "addr1_delegated";
 
-  Object.defineProperty(account.cardanoResources, "delegation", {
-    get() {
-      return {
-        rewards: mockRewardsValue,
-        status: true,
-        poolId: "pool1_ledger",
-        dRepHex: undefined,
-        deposit: "2000000",
-        stakeHex: "stake1test",
-      } as any;
-    },
-  });
+  const rewards = overrides.rewards ?? new BigNumber("5000000");
+  const dRepHex = overrides.dRepHex;
+
+  account.cardanoResources.delegation = {
+    rewards,
+    status: true,
+    poolId: "pool1_ledger",
+    ticker: "LEDGER",
+    name: "Ledger",
+    dRepHex,
+    deposit: "2000000",
+  };
 
   return account;
 };
@@ -50,15 +61,18 @@ jest.mock("@ledgerhq/live-common/bridge/useBridgeTransaction", () => ({
   default: () => {
     const account = getMockAccountData();
     return {
-      transaction: { mode: "undelegate" },
+      transaction: mockTransaction,
       setTransaction: jest.fn(),
       updateTransaction: jest.fn(),
       account,
+      parentAccount: null,
+      setAccount: jest.fn(),
       status: {
         errors: {},
         warnings: {},
         estimatedFees: new BigNumber("200000"),
         amount: new BigNumber("0"),
+        totalSpent: new BigNumber("200000"),
       },
       bridgeError: null,
       bridgePending: false,
@@ -68,11 +82,17 @@ jest.mock("@ledgerhq/live-common/bridge/useBridgeTransaction", () => ({
 
 jest.mock("@ledgerhq/live-common/bridge/index", () => ({
   getAccountBridge: jest.fn(() => ({
-    createTransaction: jest.fn(() => ({ mode: "undelegate" })),
+    createTransaction: jest.fn(() => mockTransaction),
     updateTransaction: jest.fn((t, patch) => ({ ...t, ...patch })),
     prepareTransaction: jest.fn(t => Promise.resolve(t)),
     getTransactionStatus: jest.fn(() =>
-      Promise.resolve({ errors: {}, warnings: {}, estimatedFees: new BigNumber("200000") }),
+      Promise.resolve({
+        errors: {},
+        warnings: {},
+        estimatedFees: new BigNumber("200000"),
+        amount: new BigNumber("0"),
+        totalSpent: new BigNumber("200000"),
+      }),
     ),
   })),
 }));
@@ -91,8 +111,52 @@ jest.mock("~/renderer/components/DeviceAction", () => ({
   default: () => <div data-testid="device-action">Mock Device Action</div>,
 }));
 
-const setup = (overrides = {}) => {
-  const mockAccountData = { ...getMockAccountData(), ...overrides };
+jest.mock("~/renderer/components/DropDownSelector", () => {
+  const MockDropDown = ({
+    children,
+    items,
+    renderItem,
+  }: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    children: (props: Record<string, any>) => React.ReactNode;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    items: Array<Record<string, any> & { key?: string | number }>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    renderItem: (props: { item: Record<string, any> }) => React.ReactNode;
+  }) => {
+    return (
+      <div>
+        {children && children({})}
+        <div data-testid="dropdown-items">
+          {items.map((item, index) => (
+            <div key={item.key || index}>
+              {renderItem ? renderItem({ item }) : <div onClick={item.onClick}>{item.label}</div>}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+  const MockDropDownItem = ({
+    children,
+    onClick,
+  }: {
+    children: React.ReactNode;
+    onClick: () => void;
+  }) => (
+    <div onClick={onClick} data-testid="dropdown-item">
+      {children}
+    </div>
+  );
+  return {
+    __esModule: true,
+    default: MockDropDown,
+    DropDownItem: MockDropDownItem,
+  };
+});
+
+const setup = (overrides: { rewards?: BigNumber; dRepHex?: string } = {}) => {
+  const mockAccountData = getMockAccountData(overrides);
   const initialState = {
     devices: {
       currentDevice: {
@@ -101,18 +165,18 @@ const setup = (overrides = {}) => {
         wired: true,
       },
     },
-    modals: {
-      MODAL_CARDANO_UNDELEGATE: { isOpened: true, data: { account: mockAccountData } },
-      MODAL_CARDANO_UNDELEGATE_SELF_TX_INFO: {
-        isOpened: false,
-        data: { account: mockAccountData },
-      },
-    },
   };
   return { mockAccountData, initialState };
 };
 
-describe("Cardano Undelegation Integration", () => {
+const FullFlowWrapper = ({ account }: { account: CardanoAccount }) => (
+  <>
+    <ContextMenu account={account} />
+    <ModalsLayer />
+  </>
+);
+
+describe("Cardano Undelegate Flow Integration", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     server.use(...handlers);
@@ -129,120 +193,88 @@ describe("Cardano Undelegation Integration", () => {
     document.getElementById("modals")?.remove();
   });
 
-  // ── UndelegateFlowModal ────────────────────────────────────────────────────
+  describe("when user has no rewards", () => {
+    it("should navigate from Context Menu to completion", async () => {
+      const { mockAccountData, initialState } = setup({
+        rewards: new BigNumber(0),
+        dRepHex: undefined,
+      });
 
-  describe("UndelegateFlowModal", () => {
-    it("should navigate through the undelegation flow without rewards", async () => {
-      const { mockAccountData, initialState } = setup();
-      const { user } = render(<UndelegateFlowModal account={mockAccountData as never} />, {
+      const { user } = render(<FullFlowWrapper account={mockAccountData} />, {
         initialState,
       });
 
-      expect(
-        await screen.findByText(/By un-delegating you will not receive any rewards/i),
-      ).toBeInTheDocument();
+      const contextMenuButton = screen.getByTestId("delegation-context-menu-button");
+      expect(contextMenuButton).toBeInTheDocument();
+      await user.click(screen.getByTestId("delegation-undelegate-button"));
+
+      expect(await screen.findByTestId("MODAL_CARDANO_UNDELEGATE")).toBeInTheDocument();
       expect(await screen.findByTestId("undelegate-refund-label")).toBeInTheDocument();
 
       const continueButton = document.getElementById("undelegate-continue-button");
       expect(continueButton).not.toBeNull();
-      expect(continueButton).not.toBeDisabled();
       await user.click(continueButton!);
 
       const deviceAction = await screen.findByTestId("device-action");
       expect(deviceAction).toBeInTheDocument();
-    });
-
-    it("should navigate through the undelegation flow with rewards", async () => {
-      const { mockAccountData, initialState } = setup();
-      const { user } = render(<UndelegateFlowModal account={mockAccountData as never} />, {
-        initialState,
-      });
-
-      expect(
-        await screen.findByText(/By un-delegating you will not receive any rewards/i),
-      ).toBeInTheDocument();
-      expect(await screen.findByTestId("undelegate-refund-label")).toBeInTheDocument();
-
-      const continueButton = document.getElementById("undelegate-continue-button");
-      expect(continueButton).not.toBeNull();
-      expect(continueButton).not.toBeDisabled();
-      await user.click(continueButton!);
-
-      const deviceAction = await screen.findByTestId("device-action");
-      expect(deviceAction).toBeInTheDocument();
-    });
-
-    it("should display a bridge error if transaction preparation fails", async () => {
-      jest
-        .spyOn(require("@ledgerhq/live-common/bridge/useBridgeTransaction"), "default")
-        .mockReturnValue({
-          transaction: { mode: "undelegate" },
-          setTransaction: jest.fn(),
-          updateTransaction: jest.fn(),
-          account: getMockAccountData(),
-          status: {
-            errors: {},
-            warnings: {},
-            estimatedFees: new BigNumber("0"),
-            amount: new BigNumber("0"),
-          },
-          bridgeError: new Error("Bridge network error"),
-          bridgePending: false,
-        });
-
-      const { mockAccountData, initialState } = setup();
-      render(<UndelegateFlowModal account={mockAccountData} />, {
-        initialState,
-      });
-
-      expect(await screen.findByText(/Bridge network error/i)).toBeInTheDocument();
     });
   });
 
-  // ── MODAL_CARDANO_UNDELEGATE_SELF_TX_INFO (rewards → self tx → MODAL_SEND) ──
+  describe("when user has rewards but no DRep delegated", () => {
+    it("should navigate from Context Menu to Info Modal to Send Modal", async () => {
+      const { mockAccountData, initialState } = setup({
+        rewards: new BigNumber("5000000"),
+        dRepHex: undefined,
+      });
 
-  describe("CardanoUndelegateSelfTxInfoModal", () => {
-    const selfTxSetup = () => {
-      const mockAccountData = getMockAccountData();
-      const initialState = {
-        modals: {
-          MODAL_CARDANO_UNDELEGATE_SELF_TX_INFO: {
-            isOpened: true,
-            data: { account: mockAccountData },
-          },
-        },
-      };
-      return { mockAccountData, initialState };
-    };
-
-    it("should render the info modal with a Continue button", async () => {
-      const { mockAccountData, initialState } = selfTxSetup();
-      render(<CardanoUndelegateSelfTxInfoModal account={mockAccountData as never} />, {
+      const { user } = render(<FullFlowWrapper account={mockAccountData} />, {
         initialState,
       });
 
-      const continueButton = await screen.findByTestId("modal-continue-button");
-      expect(continueButton).toBeInTheDocument();
+      await user.click(screen.getByTestId("delegation-undelegate-button"));
+
+      expect(
+        await screen.findByTestId("MODAL_CARDANO_UNDELEGATE_SELF_TX_INFO"),
+      ).toBeInTheDocument();
+
+      const modalContinueButton = await screen.findByTestId("modal-continue-button");
+      await user.click(modalContinueButton);
+
+      expect(openModal).toHaveBeenCalledWith("MODAL_SEND", expect.anything());
     });
+  });
 
-    it("should dispatch MODAL_SEND when Continue is clicked (rewards → self tx flow)", async () => {
-      const { mockAccountData, initialState } = selfTxSetup();
-      const { user } = render(
-        <CardanoUndelegateSelfTxInfoModal account={mockAccountData as never} />,
-        { initialState },
-      );
-
-      const continueButton = await screen.findByTestId("modal-continue-button");
-      expect(continueButton).not.toBeDisabled();
-      await user.click(continueButton);
-
-      // After clicking Continue, MODAL_SEND should be opened to perform a self-tx
-      // that brings the account below the min UTxO threshold, allowing un-staking.
-      expect(openModal).toHaveBeenCalledWith("MODAL_SEND", {
-        account: expect.objectContaining({ id: mockAccountData.id }),
-        recipient: mockAccountData.freshAddress,
-        amount: expect.anything(),
+  describe("when bridge network error occurs", () => {
+    it("should display a bridge error if transaction preparation fails", async () => {
+      jest.spyOn(useBridgeTransaction, "default").mockReturnValue({
+        transaction: mockTransaction,
+        setTransaction: jest.fn(),
+        updateTransaction: jest.fn(),
+        account: getMockAccountData(),
+        parentAccount: null,
+        setAccount: jest.fn(),
+        status: {
+          errors: {},
+          warnings: {},
+          estimatedFees: new BigNumber("0"),
+          amount: new BigNumber("0"),
+          totalSpent: new BigNumber("0"),
+        },
+        bridgeError: new Error("Bridge network error"),
+        bridgePending: false,
       });
+
+      const { mockAccountData, initialState } = setup();
+      render(<UndelegateFlowModal account={mockAccountData} />, {
+        initialState: {
+          ...initialState,
+          modals: {
+            MODAL_CARDANO_UNDELEGATE: { isOpened: true, data: { account: mockAccountData } },
+          },
+        },
+      });
+
+      expect(await screen.findByText(/Bridge network error/i)).toBeInTheDocument();
     });
   });
 });

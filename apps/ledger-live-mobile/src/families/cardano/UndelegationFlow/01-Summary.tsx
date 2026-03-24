@@ -9,9 +9,9 @@ import { getAccountBridge } from "@ledgerhq/live-common/bridge/index";
 import useBridgeTransaction from "@ledgerhq/live-common/bridge/useBridgeTransaction";
 import { formatCurrencyUnit, getCurrencyColor } from "@ledgerhq/live-common/currencies/index";
 import type {
-  CardanoAccount,
   CardanoDelegation,
   TransactionStatus,
+  CardanoAccount,
 } from "@ledgerhq/live-common/families/cardano/types";
 import { Text, Box } from "@ledgerhq/native-ui";
 import { AccountLike } from "@ledgerhq/types-live";
@@ -39,13 +39,17 @@ type Props = StackNavigatorProps<
   ScreenName.CardanoUndelegationSummary
 >;
 
+function isCardanoAccount(account: AccountLike): account is CardanoAccount {
+  return !!account && "cardanoResources" in account;
+}
+
 export default function UndelegationSummary({ navigation, route }: Props) {
   const { colors } = useTheme();
   const { account, parentAccount } = useAccountScreen(route);
   invariant(account, "account must be defined");
 
-  const { cardanoResources } = account as CardanoAccount;
-  const currentDelegation = cardanoResources.delegation as CardanoDelegation;
+  const cardanoAccount = isCardanoAccount(account) ? account : null;
+  const currentDelegation = cardanoAccount?.cardanoResources.delegation;
   const mainAccount = getMainAccount(account, parentAccount);
   const bridge = getAccountBridge(account, undefined);
 
@@ -105,7 +109,10 @@ export default function UndelegationSummary({ navigation, route }: Props) {
   const hasNotEnoughtBalanceError = bridgeError instanceof CardanoNotEnoughFunds;
 
   return (
-    <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      style={[styles.root, { backgroundColor: colors.background }]}
+      testID={ScreenName.CardanoUndelegationSummary}
+    >
       <TrackScreen category="DelegationFlow" name="Summary" />
 
       <View style={styles.body}>
@@ -117,7 +124,9 @@ export default function UndelegationSummary({ navigation, route }: Props) {
         </View>
 
         <View style={styles.summary}>
-          <SummaryWords currentDelegation={currentDelegation} account={account} status={status} />
+          {currentDelegation && (
+            <SummaryWords currentDelegation={currentDelegation} account={account} status={status} />
+          )}
         </View>
       </View>
       <View style={styles.footer}>
@@ -148,6 +157,7 @@ export default function UndelegationSummary({ navigation, route }: Props) {
           onPress={onContinue}
           disabled={bridgePending || !!bridgeError || Object.keys(status.errors).length > 0}
           pending={bridgePending}
+          testID="delegation-undelegate-continue"
         />
       </View>
       {!hasNotEnoughtBalanceError && bridgeErr && (
@@ -250,6 +260,7 @@ const styles = StyleSheet.create({
 function SummaryWords({
   account,
   status,
+  currentDelegation,
 }: {
   account: AccountLike;
   currentDelegation: CardanoDelegation;
@@ -259,10 +270,7 @@ function SummaryWords({
   const { t } = useTranslation();
   const { colors } = useTheme();
 
-  invariant((account as CardanoAccount).cardanoResources.delegation, "delegation must be defined");
-  const depositRefundAmount = new BigNumber(
-    (account as CardanoAccount).cardanoResources.delegation!.deposit,
-  );
+  const depositRefundAmount = new BigNumber(currentDelegation.deposit);
 
   const formatConfig = {
     disableRounding: true,
@@ -273,7 +281,7 @@ function SummaryWords({
   return (
     <>
       <View style={styles.summarySection}>
-        <LText style={styles.labelText} color="smoke">
+        <LText style={styles.labelText} color="smoke" testID="undelegation-message">
           {t("cardano.undelegation.undelegationMessage")}
         </LText>
         <View

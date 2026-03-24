@@ -35,6 +35,7 @@ export default function DelegationRow({
 
   return (
     <TouchableOpacity
+      testID="cardano-delegation-row"
       style={[
         styles.row,
         styles.wrapper,
@@ -45,7 +46,7 @@ export default function DelegationRow({
       <View style={[styles.icon]}>
         <PoolImage
           size={42}
-          isLedger={LEDGER_POOL_IDS.includes(delegation?.poolId as string)}
+          isLedger={delegation?.poolId ? LEDGER_POOL_IDS.includes(delegation.poolId) : false}
           name={delegation?.name ?? delegation.poolId ?? ""}
         />
       </View>

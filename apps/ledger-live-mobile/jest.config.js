@@ -96,7 +96,6 @@ module.exports = {
   moduleNameMapper: {
     ...pathsToModuleNameMapper(compilerOptions.paths),
     "^@features/(.*)$": "<rootDir>/../../features/$1/src",
-    "^@ledgerhq/coin-cardano/(.*)$": "<rootDir>/../../libs/coin-modules/coin-cardano/src/$1",
     "^@ledgerhq/(lumen-ui-rnative|lumen-design-core)$": "<rootDir>/node_modules/@ledgerhq/$1",
     "^react$": "<rootDir>/node_modules/react",
     "^react/(.*)$": "<rootDir>/node_modules/react/$1",

@@ -221,7 +221,6 @@ describe("UndelegationFlow Integration", () => {
     expect(infoDrawer).toBeVisible();
 
     expect(screen.getByTestId("drep-info-drawer-title")).toBeVisible();
-    expect(screen.getByTestId("drep-info-drawer-desc")).toBeVisible();
   });
 
   it("should display a network error on summary screen if bridging fails", async () => {

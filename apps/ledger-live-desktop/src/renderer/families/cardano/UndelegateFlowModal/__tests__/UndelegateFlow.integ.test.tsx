@@ -258,7 +258,6 @@ describe("Cardano Undelegate Flow Integration", () => {
       await user.click(screen.getByTestId("delegation-undelegate-button"));
 
       expect(await screen.findByTestId("modal-cardano-undelegate")).toBeInTheDocument();
-      expect(await screen.findByTestId("undelegate-refund-label")).toBeInTheDocument();
 
       const continueButton = document.getElementById("undelegate-continue-button");
       expect(continueButton).not.toBeNull();

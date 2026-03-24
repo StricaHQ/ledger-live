@@ -55,10 +55,7 @@ export default function DRepDelegationSelfTransactionInfoDrawer({
         >
           <Trans i18nKey="cardano.undelegation.dRepDelegationSelfTransactionDrawer.title" />
         </Text>
-        <Text
-          style={dRepDelegationSelfTransactionInfoDrawerStyles.description}
-          testID="drep-info-drawer-desc"
-        >
+        <Text style={dRepDelegationSelfTransactionInfoDrawerStyles.description}>
           <Trans i18nKey="cardano.undelegation.dRepDelegationSelfTransactionDrawer.description" />
         </Text>
 

@@ -4,13 +4,13 @@ import BigNumber from "bignumber.js";
 import { setSupportedCurrencies } from "@ledgerhq/live-common/currencies/index";
 import { DeviceModelId } from "@ledgerhq/devices";
 import { server } from "tests/server";
-import { handlers } from "../../__tests__/handlers";
 import UndelegateFlowModal from "../index";
 import * as useBridgeTransaction from "@ledgerhq/live-common/bridge/useBridgeTransaction";
 import ContextMenu from "../../Delegation/ContextMenu";
 import ModalsLayer from "~/renderer/ModalsLayer";
 import { CardanoAccount, Transaction } from "@ledgerhq/live-common/families/cardano/types";
 import { getCardanoAccountFixture } from "@ledgerhq/coin-cardano/fixtures/accounts";
+import { http, HttpResponse } from "msw";
 
 setSupportedCurrencies(["cardano"]);
 jest.mock("~/renderer/actions/modals", () => {
@@ -111,6 +111,11 @@ jest.mock("~/renderer/components/DeviceAction", () => ({
   default: () => <div data-testid="device-action">Mock Device Action</div>,
 }));
 
+jest.mock("~/renderer/modals/Send", () => ({
+  __esModule: true,
+  default: () => <div data-testid="modal-send">Mock Send Modal</div>,
+}));
+
 jest.mock("~/renderer/components/DropDownSelector", () => {
   const MockDropDown = ({
     children,
@@ -165,6 +170,9 @@ const setup = (overrides: { rewards?: BigNumber; dRepHex?: string } = {}) => {
         wired: true,
       },
     },
+    accounts: {
+      active: [mockAccountData],
+    },
   };
   return { mockAccountData, initialState };
 };
@@ -177,6 +185,47 @@ const FullFlowWrapper = ({ account }: { account: CardanoAccount }) => (
 );
 
 describe("Cardano Undelegate Flow Integration", () => {
+  const mockPools = [
+    {
+      poolId: "a314a18528d00c5fbd067ecb4a212cf2f307c83d2c08f44a11ebebf6",
+      name: "Ledger by Figment 1",
+      ticker: "LBF1",
+      website: "https://www.ledger.com/coin/staking/cardano",
+      cost: "170.0",
+      margin: "6",
+      pledge: "9.82",
+      liveStake: "40.22",
+      retiredEpoch: 618,
+    },
+    {
+      poolId: "4a9c9902c9538da900b10b716d5d1b214487455fdb06028b32ffa180",
+      name: "Ledger by Figment 2",
+      ticker: "LBF2",
+      website: "https://www.ledger.com/coin/staking/cardano",
+      cost: "170.0",
+      margin: "6",
+      pledge: "9.82",
+      liveStake: "91.69",
+      retiredEpoch: 618,
+    },
+  ];
+
+  const handlers = [
+    http.get("*/v1/pool/list", () => {
+      return HttpResponse.json({
+        pageNo: 1,
+        limit: 10,
+        count: mockPools.length,
+        pools: mockPools,
+      });
+    }),
+    http.get("*/v1/pool/detail", () => {
+      return HttpResponse.json({
+        pools: [mockPools[0]],
+      });
+    }),
+  ];
+
   beforeEach(() => {
     jest.clearAllMocks();
     server.use(...handlers);
@@ -208,7 +257,7 @@ describe("Cardano Undelegate Flow Integration", () => {
       expect(contextMenuButton).toBeInTheDocument();
       await user.click(screen.getByTestId("delegation-undelegate-button"));
 
-      expect(await screen.findByTestId("MODAL_CARDANO_UNDELEGATE")).toBeInTheDocument();
+      expect(await screen.findByTestId("modal-cardano-undelegate")).toBeInTheDocument();
       expect(await screen.findByTestId("undelegate-refund-label")).toBeInTheDocument();
 
       const continueButton = document.getElementById("undelegate-continue-button");
@@ -234,7 +283,7 @@ describe("Cardano Undelegate Flow Integration", () => {
       await user.click(screen.getByTestId("delegation-undelegate-button"));
 
       expect(
-        await screen.findByTestId("MODAL_CARDANO_UNDELEGATE_SELF_TX_INFO"),
+        await screen.findByTestId("modal-cardano-undelegate-self-tx-info"),
       ).toBeInTheDocument();
 
       const modalContinueButton = await screen.findByTestId("modal-continue-button");

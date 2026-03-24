@@ -867,6 +867,9 @@ importers:
       '@ledgerhq/coin-canton':
         specifier: workspace:^
         version: link:../../libs/coin-modules/coin-canton
+      '@ledgerhq/coin-cardano':
+        specifier: workspace:^
+        version: link:../../libs/coin-modules/coin-cardano
       '@ledgerhq/coin-casper':
         specifier: workspace:^
         version: link:../../libs/coin-modules/coin-casper
@@ -1505,6 +1508,9 @@ importers:
       '@ledgerhq/coin-canton':
         specifier: workspace:^
         version: link:../../libs/coin-modules/coin-canton
+      '@ledgerhq/coin-cardano':
+        specifier: workspace:^
+        version: link:../../libs/coin-modules/coin-cardano
       '@ledgerhq/coin-casper':
         specifier: workspace:^
         version: link:../../libs/coin-modules/coin-casper

@@ -4,52 +4,44 @@ import BigNumber from "bignumber.js";
 import { setSupportedCurrencies } from "@ledgerhq/live-common/currencies/index";
 import { DeviceModelId } from "@ledgerhq/devices";
 import { server } from "tests/server";
-import { handlers } from "../../__tests__/handlers";
 import DelegationFlowModal from "../index";
+import { http, HttpResponse } from "msw";
+import { getCardanoAccountFixture } from "@ledgerhq/coin-cardano/fixtures/accounts";
 
 setSupportedCurrencies(["cardano"]);
 
+const mockPools = [
+  {
+    poolId: "a314a18528d00c5fbd067ecb4a212cf2f307c83d2c08f44a11ebebf6",
+    name: "Ledger by Figment 1",
+    ticker: "LBF1",
+    website: "https://www.ledger.com/coin/staking/cardano",
+    cost: "170.0",
+    margin: "6",
+    pledge: "9.82",
+    liveStake: "40.22",
+    retiredEpoch: 618,
+  },
+  {
+    poolId: "4a9c9902c9538da900b10b716d5d1b214487455fdb06028b32ffa180",
+    name: "Ledger by Figment 2",
+    ticker: "LBF2",
+    website: "https://www.ledger.com/coin/staking/cardano",
+    cost: "170.0",
+    margin: "6",
+    pledge: "9.82",
+    liveStake: "91.69",
+    retiredEpoch: 618,
+  },
+];
+
 // Mock data generator for the account
-const getMockAccountData = () => ({
-  type: "Account",
-  id: "mock:1:cardano:true_cardano_0:",
-  seedIdentifier: "mock",
-  name: "Cardano No Delegation",
-  starred: false,
-  used: false,
-  derivationMode: "cardano",
-  index: 0,
-  freshAddress: "addr1_no_delegation",
-  freshAddressPath: "1852'/1815'/0'/0/0",
-  blockHeight: 100000,
-  creationDate: new Date("2023-01-01T00:00:00.000Z"),
-  operationsCount: 10,
-  operations: [],
-  pendingOperations: [],
-  currencyId: "cardano",
-  currency: {
-    id: "cardano",
-    name: "Cardano",
-    type: "CryptoCurrency",
-    ticker: "ADA",
-    units: [{ name: "ada", code: "ADA", magnitude: 6 }],
-  },
-  unitMagnitude: 6,
-  lastSyncDate: new Date("2023-10-01T00:00:00.000Z"),
-  balance: new BigNumber("100000000"),
-  spendableBalance: new BigNumber("100000000"),
-  cardanoResources: {
-    delegation: null,
-    protocolParams: {
-      stakeKeyDeposit: "2000000",
-    },
-  },
-});
+const getMockAccountData = getCardanoAccountFixture({ delegation: undefined });
 
 jest.mock("@ledgerhq/live-common/bridge/useBridgeTransaction", () => ({
   __esModule: true,
   default: () => {
-    const account = getMockAccountData();
+    const account = getMockAccountData;
     return {
       transaction: {
         mode: "delegate",
@@ -90,28 +82,7 @@ jest.mock("@ledgerhq/live-common/bridge/index", () => ({
 // but we use the data from our MSW-matched mockPools.
 jest.mock("@ledgerhq/live-common/families/cardano/react", () => ({
   useCardanoFamilyPools: jest.fn(() => ({
-    pools: [
-      {
-        poolId: "00000000000000000000000000000000000000000000000000000001",
-        name: "Ledger (Blockfrost)",
-        ticker: "LDGR1",
-        margin: "0.01",
-        cost: "340000000",
-        pledge: "50000000000",
-        liveStake: "1000000000000",
-        website: "https://ledger.com",
-      },
-      {
-        poolId: "00000000000000000000000000000000000000000000000000000002",
-        name: "Strica",
-        ticker: "STRIC",
-        margin: "0.02",
-        cost: "340000000",
-        pledge: "100000000000",
-        liveStake: "2000000000000",
-        website: "https://strica.io",
-      },
-    ],
+    pools: mockPools,
     searchQuery: "",
     setSearchQuery: jest.fn(),
     onScrollEndReached: jest.fn(),
@@ -153,47 +124,29 @@ jest.mock("@ledgerhq/live-common/families/cardano/staking", () => ({
   ...jest.requireActual("@ledgerhq/live-common/families/cardano/staking"),
   fetchPoolDetails: jest.fn(() =>
     Promise.resolve({
-      pools: [
-        {
-          poolId: "00000000000000000000000000000000000000000000000000000001",
-          name: "Ledger (Blockfrost)",
-          ticker: "LDGR1",
-          margin: "0.01",
-          cost: "340000000",
-          pledge: "50000000000",
-          liveStake: "1000000000000",
-          website: "https://ledger.com",
-        },
-      ],
+      pools: mockPools,
     }),
   ),
-  fetchAndSortPools: jest.fn(() =>
-    Promise.resolve([
-      {
-        poolId: "00000000000000000000000000000000000000000000000000000001",
-        name: "Ledger (Blockfrost)",
-        ticker: "LDGR1",
-        margin: "0.01",
-        cost: "340000000",
-        pledge: "50000000000",
-        liveStake: "1000000000000",
-        website: "https://ledger.com",
-      },
-      {
-        poolId: "00000000000000000000000000000000000000000000000000000002",
-        name: "Strica",
-        ticker: "STRIC",
-        margin: "0.02",
-        cost: "340000000",
-        pledge: "100000000000",
-        liveStake: "2000000000000",
-        website: "https://strica.io",
-      },
-    ]),
-  ),
+  fetchAndSortPools: jest.fn(() => Promise.resolve(mockPools)),
 }));
 
 describe("Cardano DelegationFlowModal Integration", () => {
+  const handlers = [
+    http.get("*/v1/pool/list", () => {
+      return HttpResponse.json({
+        pageNo: 1,
+        limit: 10,
+        count: mockPools.length,
+        pools: mockPools,
+      });
+    }),
+    http.get("*/v1/pool/detail", () => {
+      return HttpResponse.json({
+        pools: [mockPools[0]],
+      });
+    }),
+  ];
+
   beforeEach(() => {
     server.use(...handlers);
 
@@ -210,7 +163,7 @@ describe("Cardano DelegationFlowModal Integration", () => {
   });
 
   it("should navigate through the delegation flow", async () => {
-    const mockAccountData = getMockAccountData();
+    const mockAccountData = getMockAccountData;
     const initialState = {
       devices: {
         currentDevice: {
@@ -232,10 +185,16 @@ describe("Cardano DelegationFlowModal Integration", () => {
 
     // Step 1: Validator Selection
     await waitFor(() => {
-      expect(screen.getByText(/Ledger \(Blockfrost\)/i)).toBeInTheDocument();
+      expect(
+        screen.getByTestId(
+          "validator-row-a314a18528d00c5fbd067ecb4a212cf2f307c83d2c08f44a11ebebf6",
+        ),
+      ).toBeInTheDocument();
     });
 
-    const ledgerPool = screen.getByText(/Ledger \(Blockfrost\)/i);
+    const ledgerPool = screen.getByTestId(
+      "validator-row-a314a18528d00c5fbd067ecb4a212cf2f307c83d2c08f44a11ebebf6",
+    );
     await user.click(ledgerPool);
 
     const continueButton = document.getElementById("delegate-continue-button");
@@ -247,7 +206,7 @@ describe("Cardano DelegationFlowModal Integration", () => {
       expect(screen.getByText(/delegating to/i)).toBeInTheDocument();
     });
     // Validator name should be present in summary
-    expect(screen.getByTestId("validator-name-label")).toHaveTextContent(/Ledger \(Blockfrost\)/i);
+    expect(screen.getByTestId("validator-name-label")).toHaveTextContent(/Ledger by Figment 1/i);
 
     const summaryContinueButton = document.getElementById("delegate-continue-button");
     await user.click(summaryContinueButton!);
@@ -265,11 +224,11 @@ describe("Cardano DelegationFlowModal Integration", () => {
         transaction: {
           mode: "delegate",
           poolId: "00000000000000000000000000000000000000000000000000000001",
-          protocolParams: getMockAccountData().cardanoResources.protocolParams,
+          protocolParams: getMockAccountData.cardanoResources.protocolParams,
         },
         setTransaction: jest.fn(),
         updateTransaction: jest.fn(),
-        account: getMockAccountData(),
+        account: getMockAccountData,
         status: {
           errors: {},
           warnings: {},
@@ -280,7 +239,7 @@ describe("Cardano DelegationFlowModal Integration", () => {
         bridgePending: false,
       });
 
-    const mockAccountData = getMockAccountData();
+    const mockAccountData = getMockAccountData;
     const initialState = {
       devices: {
         currentDevice: {

@@ -46,13 +46,19 @@ export default function DRepDelegationSelfTransactionInfoDrawer({
 
   return (
     <QueuedDrawer isRequestingToBeOpened={isOpen} onClose={onClose}>
-      <Flex alignItems="center">
+      <Flex alignItems="center" testID="cardano-undelegate-info-drawer">
         <Illustration lightSource={EarnLight} darkSource={EarnDark} size={100} />
 
-        <Text style={dRepDelegationSelfTransactionInfoDrawerStyles.title}>
+        <Text
+          style={dRepDelegationSelfTransactionInfoDrawerStyles.title}
+          testID="drep-info-drawer-title"
+        >
           <Trans i18nKey="cardano.undelegation.dRepDelegationSelfTransactionDrawer.title" />
         </Text>
-        <Text style={dRepDelegationSelfTransactionInfoDrawerStyles.description}>
+        <Text
+          style={dRepDelegationSelfTransactionInfoDrawerStyles.description}
+          testID="drep-info-drawer-desc"
+        >
           <Trans i18nKey="cardano.undelegation.dRepDelegationSelfTransactionDrawer.description" />
         </Text>
 

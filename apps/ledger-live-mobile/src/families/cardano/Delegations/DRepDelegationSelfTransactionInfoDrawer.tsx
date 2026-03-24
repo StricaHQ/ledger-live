@@ -49,10 +49,7 @@ export default function DRepDelegationSelfTransactionInfoDrawer({
       <Flex alignItems="center" testID="cardano-undelegate-info-drawer">
         <Illustration lightSource={EarnLight} darkSource={EarnDark} size={100} />
 
-        <Text
-          style={dRepDelegationSelfTransactionInfoDrawerStyles.title}
-          testID="drep-info-drawer-title"
-        >
+        <Text style={dRepDelegationSelfTransactionInfoDrawerStyles.title}>
           <Trans i18nKey="cardano.undelegation.dRepDelegationSelfTransactionDrawer.title" />
         </Text>
         <Text style={dRepDelegationSelfTransactionInfoDrawerStyles.description}>

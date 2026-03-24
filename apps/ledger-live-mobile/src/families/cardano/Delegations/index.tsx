@@ -224,11 +224,9 @@ function Delegations({ account }: Props) {
       {
         label: t("delegation.actions.undelegate"),
         Icon: (props: IconProps) => (
-          <View testID="delegation-undelegate-action">
-            <Circle {...props} bg={rgba(colors.alert, 0.2)}>
-              <UndelegateIcon />
-            </Circle>
-          </View>
+          <Circle {...props} bg={rgba(colors.alert, 0.2)}>
+            <UndelegateIcon />
+          </Circle>
         ),
         disabled: false,
         onPress: onUndelegate,

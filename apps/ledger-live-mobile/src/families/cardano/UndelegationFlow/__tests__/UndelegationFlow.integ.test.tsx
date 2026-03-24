@@ -185,7 +185,7 @@ describe("UndelegationFlow Integration", () => {
     const row = await screen.findByTestId("cardano-delegation-row");
     await user.press(row);
 
-    const stopDelegationBtn = await screen.findByTestId("delegation-undelegate-action");
+    const stopDelegationBtn = await screen.findByText("Undelegate");
     await user.press(stopDelegationBtn);
 
     await screen.findByTestId("Cardano-Undelegation-Summary");
@@ -214,7 +214,7 @@ describe("UndelegationFlow Integration", () => {
     const row = await screen.findByTestId("cardano-delegation-row");
     await user.press(row);
 
-    const stopDelegationBtn = await screen.findByTestId("delegation-undelegate-action");
+    const stopDelegationBtn = await screen.findByText("Undelegate");
     await user.press(stopDelegationBtn);
 
     const infoDrawer = await screen.findByTestId("cardano-undelegate-info-drawer");
@@ -260,7 +260,7 @@ describe("UndelegationFlow Integration", () => {
 
     const row = await screen.findByTestId("cardano-delegation-row");
     await user.press(row);
-    const stopDelegationBtn = await screen.findByTestId("delegation-undelegate-action");
+    const stopDelegationBtn = await screen.findByText("Undelegate");
     await user.press(stopDelegationBtn);
 
     const errorText = await screen.findByText(/Undelegation network error/i);

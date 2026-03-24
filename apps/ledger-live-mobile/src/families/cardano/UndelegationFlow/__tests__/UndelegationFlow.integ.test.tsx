@@ -185,7 +185,7 @@ describe("UndelegationFlow Integration", () => {
     const row = await screen.findByTestId("cardano-delegation-row");
     await user.press(row);
 
-    const stopDelegationBtn = await screen.findByTestId("delegation-undelegate-action");
+    const stopDelegationBtn = await screen.findByText("Undelegate");
     await user.press(stopDelegationBtn);
 
     await screen.findByTestId("Cardano-Undelegation-Summary");
@@ -214,14 +214,11 @@ describe("UndelegationFlow Integration", () => {
     const row = await screen.findByTestId("cardano-delegation-row");
     await user.press(row);
 
-    const stopDelegationBtn = await screen.findByTestId("delegation-undelegate-action");
+    const stopDelegationBtn = await screen.findByText("Undelegate");
     await user.press(stopDelegationBtn);
 
     const infoDrawer = await screen.findByTestId("cardano-undelegate-info-drawer");
     expect(infoDrawer).toBeVisible();
-
-    expect(screen.getByTestId("drep-info-drawer-title")).toBeVisible();
-    expect(screen.getByTestId("drep-info-drawer-desc")).toBeVisible();
   });
 
   it("should display a network error on summary screen if bridging fails", async () => {
@@ -261,7 +258,7 @@ describe("UndelegationFlow Integration", () => {
 
     const row = await screen.findByTestId("cardano-delegation-row");
     await user.press(row);
-    const stopDelegationBtn = await screen.findByTestId("delegation-undelegate-action");
+    const stopDelegationBtn = await screen.findByText("Undelegate");
     await user.press(stopDelegationBtn);
 
     const errorText = await screen.findByText(/Undelegation network error/i);

@@ -40,10 +40,6 @@ type Props = {
 type DelegationDrawerProps = React.ComponentProps<typeof DelegationDrawer>;
 type DelegationDrawerActions = DelegationDrawerProps["actions"];
 
-function isCardanoAccount(account: AccountLike): account is CardanoAccount {
-  return !!account && "cardanoResources" in account;
-}
-
 function Delegations({ account }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -71,14 +67,12 @@ function Delegations({ account }: Props) {
       params?: { [key: string]: unknown };
     }) => {
       setDelegation(undefined);
-      const cardanoAccount = isCardanoAccount(account) ? account : (account as CardanoAccount);
-      const nav = navigation as NativeStackNavigationProp<{ [key: string]: object }>;
-      nav.navigate(route, {
+      (navigation as NativeStackNavigationProp<{ [key: string]: object }>).navigate(route, {
         screen,
-        params: { ...params, accountId: cardanoAccount.id },
+        params: { ...params, accountId: account.id },
       });
     },
-    [navigation, account],
+    [navigation, account.id],
   );
 
   const onDelegate = useCallback(() => {
@@ -230,11 +224,9 @@ function Delegations({ account }: Props) {
       {
         label: t("delegation.actions.undelegate"),
         Icon: (props: IconProps) => (
-          <View testID="delegation-undelegate-action">
-            <Circle {...props} bg={rgba(colors.alert, 0.2)}>
-              <UndelegateIcon />
-            </Circle>
-          </View>
+          <Circle {...props} bg={rgba(colors.alert, 0.2)}>
+            <UndelegateIcon />
+          </Circle>
         ),
         disabled: false,
         onPress: onUndelegate,

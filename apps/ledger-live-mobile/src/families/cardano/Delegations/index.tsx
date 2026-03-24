@@ -251,7 +251,7 @@ function Delegations({ account }: Props) {
         account={account}
         ValidatorImage={({ size }) => (
           <PoolImage
-            isLedger={delegation?.poolId ? LEDGER_POOL_IDS.includes(delegation.poolId) : false}
+            isLedger={LEDGER_POOL_IDS.includes(delegation?.poolId as string)}
             name={delegation?.name ?? delegation?.poolId ?? ""}
             size={size}
           />
@@ -298,9 +298,8 @@ function Delegations({ account }: Props) {
 }
 
 export default function CardanoDelegations({ account }: { account: AccountLike }) {
-  const cardanoAccount = isCardanoAccount(account) ? account : null;
-  if (!cardanoAccount?.cardanoResources) return null;
-  return <Delegations account={cardanoAccount} />;
+  if (!(account as CardanoAccount).cardanoResources) return null;
+  return <Delegations account={account as CardanoAccount} />;
 }
 
 const styles = StyleSheet.create({

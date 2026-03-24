@@ -8,13 +8,13 @@ import {
 } from "@react-navigation/native-stack";
 import { component as DelegationFlow } from "../index";
 import { server } from "@tests/server";
-import { handlers } from "../../__tests__/handlers";
 import BigNumber from "bignumber.js";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { getCardanoAccountFixture } from "@ledgerhq/coin-cardano/fixtures/accounts";
 import { CardanoAccount } from "@ledgerhq/live-common/families/cardano/types";
 import { NavigatorScreenParams } from "@react-navigation/native";
 import { CardanoDelegationFlowParamList } from "../types";
+import { http, HttpResponse } from "msw";
 
 jest.mock("LLM/hooks/useAccountScreen", () => ({
   useAccountScreen: () => ({ account: mockAccount, parentAccount: null }),
@@ -79,9 +79,7 @@ const mockAccount: CardanoAccount = getCardanoAccountFixture({
     deposit: "0",
   },
 });
-mockAccount.id = "test-cardano-account";
-mockAccount.name = "Cardano Test Account";
-mockAccount.currency.id = "cardano";
+
 import { ScreenName } from "~/const";
 
 type RootStackParamList = {
@@ -124,6 +122,47 @@ const INITIAL_STATE = {
 };
 
 describe("DelegationFlow Integration", () => {
+  const mockPools = [
+    {
+      poolId: "a314a18528d00c5fbd067ecb4a212cf2f307c83d2c08f44a11ebebf6",
+      name: "Ledger by Figment 1",
+      ticker: "LBF1",
+      website: "https://www.ledger.com/coin/staking/cardano",
+      cost: "170.0",
+      margin: "6",
+      pledge: "9.82",
+      liveStake: "40.22",
+      retiredEpoch: 618,
+    },
+    {
+      poolId: "4a9c9902c9538da900b10b716d5d1b214487455fdb06028b32ffa180",
+      name: "Ledger by Figment 2",
+      ticker: "LBF2",
+      website: "https://www.ledger.com/coin/staking/cardano",
+      cost: "170.0",
+      margin: "6",
+      pledge: "9.82",
+      liveStake: "91.69",
+      retiredEpoch: 618,
+    },
+  ];
+
+  const handlers = [
+    http.get("*/v1/pool/list", () => {
+      return HttpResponse.json({
+        pageNo: 1,
+        limit: 10,
+        count: mockPools.length,
+        pools: mockPools,
+      });
+    }),
+    http.get("*/v1/pool/detail", () => {
+      return HttpResponse.json({
+        pools: [mockPools[0]],
+      });
+    }),
+  ];
+
   beforeEach(() => {
     server.use(...handlers);
   });

@@ -46,7 +46,7 @@ export default function DelegationRow({
       <View style={[styles.icon]}>
         <PoolImage
           size={42}
-          isLedger={delegation?.poolId ? LEDGER_POOL_IDS.includes(delegation.poolId) : false}
+          isLedger={LEDGER_POOL_IDS.includes(delegation?.poolId as string)}
           name={delegation?.name ?? delegation.poolId ?? ""}
         />
       </View>

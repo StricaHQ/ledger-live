@@ -14,6 +14,9 @@ export type CardanoUndelegateSelfTxInfoModalProps = {
   account: CardanoAccount;
 };
 
+// used for internal transaction
+const DEFAULT_TX_AMOUNT = 2000000;
+
 export default function CardanoUndelegateSelfTxInfoModal({
   account,
 }: CardanoUndelegateSelfTxInfoModalProps) {
@@ -24,7 +27,7 @@ export default function CardanoUndelegateSelfTxInfoModal({
       openModal("MODAL_SEND", {
         account,
         recipient: account.freshAddress,
-        amount: new BigNumber(account.cardanoResources.protocolParams.stakeKeyDeposit),
+        amount: new BigNumber(DEFAULT_TX_AMOUNT),
       }),
     );
   }, [account, dispatch]);

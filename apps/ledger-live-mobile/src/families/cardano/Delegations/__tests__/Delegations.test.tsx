@@ -89,16 +89,13 @@ const mockAccountBase: CardanoAccount = {
   currency: { id: "cardano", name: "Cardano" },
   balance: new BigNumber(100),
   cardanoResources: {
-    protocolParams: {
-      stakeKeyDeposit: "2000000",
-    },
     delegation: {
       rewards: new BigNumber(0),
       dRepHex: undefined,
       poolId: null,
     },
   },
-} as unknown as CardanoAccount;
+} as CardanoAccount;
 
 describe("CardanoDelegations", () => {
   beforeEach(() => {

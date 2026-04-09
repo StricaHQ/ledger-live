@@ -92,7 +92,7 @@ function Delegations({ account }: Props) {
   const onUndelegate = useCallback(() => {
     const hasRewardsWithNoDrepDelegation =
       account.cardanoResources.delegation?.rewards.isGreaterThan(0) &&
-      account.cardanoResources.delegation?.dRepHex == null;
+      account.cardanoResources.delegation?.dRepHex === undefined;
 
     if (hasRewardsWithNoDrepDelegation) {
       setDelegation(undefined);

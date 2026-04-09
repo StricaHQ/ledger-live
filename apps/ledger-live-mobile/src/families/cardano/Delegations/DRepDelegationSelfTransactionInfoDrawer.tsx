@@ -28,7 +28,6 @@ export default function DRepDelegationSelfTransactionInfoDrawer({
   const navigation = useNavigation();
 
   const onContinue = useCallback(() => {
-    onClose();
     const bridge = getAccountBridge(account);
     const transaction = bridge.createTransaction(account);
     const updatedTransaction = bridge.updateTransaction(transaction, {
@@ -43,7 +42,7 @@ export default function DRepDelegationSelfTransactionInfoDrawer({
         transaction: updatedTransaction,
       },
     });
-  }, [account, navigation, onClose]);
+  }, [account, navigation]);
 
   return (
     <QueuedDrawer isRequestingToBeOpened={isOpen} onClose={onClose}>

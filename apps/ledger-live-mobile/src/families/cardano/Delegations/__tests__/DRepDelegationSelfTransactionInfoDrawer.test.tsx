@@ -35,12 +35,7 @@ const mockAccount = {
   id: "test-account-id",
   freshAddress: "addr1test...",
   currency: { id: "cardano" },
-  cardanoResources: {
-    protocolParams: {
-      stakeKeyDeposit: "2000000",
-    },
-  },
-} as unknown as CardanoAccount;
+} as CardanoAccount;
 
 const mockBridge = {
   createTransaction: jest.fn(() => ({})),
@@ -83,19 +78,17 @@ describe("DRepDelegationSelfTransactionInfoDrawer", () => {
   });
 
   it("creates transaction and navigates on continue", () => {
-    const onClose = jest.fn();
     render(
       <DRepDelegationSelfTransactionInfoDrawer
         account={mockAccount}
         isOpen={true}
-        onClose={onClose}
+        onClose={jest.fn()}
       />,
     );
 
     const continueButton = screen.getByTestId("continue-button");
     fireEvent.press(continueButton);
 
-    expect(onClose).toHaveBeenCalled();
     expect(getAccountBridge).toHaveBeenCalledWith(mockAccount);
     expect(mockBridge.createTransaction).toHaveBeenCalledWith(mockAccount);
     expect(mockBridge.updateTransaction).toHaveBeenCalledWith(expect.anything(), {

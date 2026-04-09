@@ -100,7 +100,7 @@ describe("DRepDelegationSelfTransactionInfoDrawer", () => {
     expect(mockBridge.createTransaction).toHaveBeenCalledWith(mockAccount);
     expect(mockBridge.updateTransaction).toHaveBeenCalledWith(expect.anything(), {
       recipient: mockAccount.freshAddress,
-      amount: new BigNumber(mockAccount.cardanoResources.protocolParams.stakeKeyDeposit),
+      amount: new BigNumber(2000000),
     });
 
     expect(mockNavigate).toHaveBeenCalledWith(NavigatorName.SendFunds, {

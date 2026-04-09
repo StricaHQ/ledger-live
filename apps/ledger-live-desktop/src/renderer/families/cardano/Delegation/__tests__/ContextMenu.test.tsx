@@ -44,6 +44,8 @@ jest.mock("~/renderer/components/DropDownSelector", () => {
 const mockAccountBase = {
   id: "test-account-id",
   currency: {
+    id: "cardano",
+    name: "Cardano",
     ticker: "ADA",
   },
   cardanoResources: {

@@ -95,7 +95,7 @@ const mockAccountBase: CardanoAccount = {
       poolId: null,
     },
   },
-} as CardanoAccount;
+} as unknown as CardanoAccount;
 
 describe("CardanoDelegations", () => {
   beforeEach(() => {

@@ -16,6 +16,11 @@ import * as useBridgeTransaction from "@ledgerhq/live-common/bridge/useBridgeTra
 import { http, HttpResponse } from "msw";
 import { CardanoAccount } from "@ledgerhq/live-common/families/cardano/types";
 
+jest.mock("~/components/CurrencyIcon", () => ({
+  __esModule: true,
+  default: () => null,
+}));
+
 let mockRewardsValue = new BigNumber("0");
 let mockDepositValue = "2000000";
 

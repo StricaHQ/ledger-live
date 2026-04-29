@@ -18,6 +18,11 @@ import { http, HttpResponse } from "msw";
 import { ScreenName } from "~/const";
 import * as useBridgeTransaction from "@ledgerhq/live-common/bridge/useBridgeTransaction";
 
+jest.mock("~/components/CurrencyIcon", () => ({
+  __esModule: true,
+  default: () => null,
+}));
+
 const mockAccount: CardanoAccount = getCardanoAccountFixture({
   delegation: {
     rewards: new BigNumber("0"),

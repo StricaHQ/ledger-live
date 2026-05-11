@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent } from "tests/testSetup";
-import DREPSearchInput, { NoResultPlaceholder } from "./DREPSearchInput";
+import DREPSearchInput, { NoResultPlaceholder } from "./DRepSearchInput";
 
 jest.mock("~/renderer/screens/accounts/AccountList/SearchBox", () => ({
   __esModule: true,

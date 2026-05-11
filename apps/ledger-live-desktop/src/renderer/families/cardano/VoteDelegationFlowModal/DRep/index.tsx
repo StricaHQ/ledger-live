@@ -7,10 +7,10 @@ import React, { useCallback, useEffect, useState } from "react";
 import styled from "styled-components";
 import BigSpinner from "~/renderer/components/BigSpinner";
 import Box from "~/renderer/components/Box";
-import DRepSearchInput, { NoResultPlaceholder } from "./components/DREPSearchInput";
+import DRepSearchInput, { NoResultPlaceholder } from "./components/DRepSearchInput";
 import ScrollLoadingList from "../ScrollLoadingList";
 import DRepRow from "./components/DRepRow";
-import DRepListHeader from "./components/DREPListHeader";
+import DRepListHeader from "./components/DRepListHeader";
 type Props = {
   account: Account;
   status: TransactionStatus;

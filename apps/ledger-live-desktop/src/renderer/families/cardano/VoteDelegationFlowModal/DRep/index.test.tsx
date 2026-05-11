@@ -10,7 +10,7 @@ jest.mock("@ledgerhq/live-common/families/cardano/react", () => ({
 
 import { useCardanoFamilyDReps } from "@ledgerhq/live-common/families/cardano/react";
 
-jest.mock("./components/DREPSearchInput", () => ({
+jest.mock("./components/DRepSearchInput", () => ({
   __esModule: true,
   default: ({ onSearch }: { onSearch: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
     <input data-testid="search-input" onChange={onSearch} />
@@ -51,7 +51,7 @@ jest.mock("./components/DRepRow", () => ({
   ),
 }));
 
-jest.mock("./components/DREPListHeader", () => ({
+jest.mock("./components/DRepListHeader", () => ({
   __esModule: true,
   default: () => <div data-testid="drep-list-header" />,
 }));

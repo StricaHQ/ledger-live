@@ -14,7 +14,7 @@ jest.mock("~/renderer/modals/Send/AccountFooter", () => {
   };
 });
 
-jest.mock("../fields/DRepField", () => {
+jest.mock("../DRep", () => {
   return function MockDRepField({ onChangeDRep }: { onChangeDRep: (d: { hex: string }) => void }) {
     return (
       <div data-testid="drep-field">

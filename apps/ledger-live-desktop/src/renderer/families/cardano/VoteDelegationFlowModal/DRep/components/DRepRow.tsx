@@ -1,10 +1,15 @@
-import React, { useCallback, memo } from "react";
-
+import { getDefaultExplorerView, getDRepExplorer } from "@ledgerhq/live-common/explorers";
+import { CryptoCurrency } from "@ledgerhq/types-cryptoassets";
+import React, { useCallback } from "react";
 import styled, { css } from "styled-components";
-
 import Box from "~/renderer/components/Box";
 import Text from "~/renderer/components/Text";
 import ExternalLink from "~/renderer/icons/ExternalLink";
+import Check from "~/renderer/icons/Check";
+import { openURL } from "~/renderer/linking";
+import { DRep } from "@ledgerhq/live-common/families/cardano/DRep";
+import { dayAndHourFormat, useDateFormatter } from "~/renderer/hooks/useDateFormatter";
+import LedgerDRepIcon from "../../LedgerDRepIcon";
 
 export const IconContainer = styled.div<{
   isSR?: boolean;
@@ -123,38 +128,42 @@ const Row = styled(Box).attrs(() => ({
       : ""}
 `;
 
+const StyledRow = styled(Row)`
+  border-color: transparent;
+  margin-bottom: 0;
+`;
+
+const ChosenMark = styled(Check).attrs<{
+  active: boolean;
+}>(p => ({
+  color: p.active ? p.theme.colors.primary.c80 : "transparent",
+  size: 14,
+}))<{
+  active?: boolean;
+  size?: number;
+}>``;
+
 export type DRepRowProps = {
-  DRep: {
-    hex: string;
-  };
-
-  icon?: React.ReactNode;
-  title: React.ReactNode;
-  subtitle: React.ReactNode;
-  lastActiveOn?: React.ReactNode;
-  chosenMark: React.ReactNode;
-  disabled?: boolean;
-
-  onClick?: (a: DRepRowProps["DRep"]) => void;
-  onExternalLink: (address: string) => void;
-  style?: React.CSSProperties;
-  className?: string;
+  currency: CryptoCurrency;
+  DRep: DRep;
+  active?: boolean;
+  onClick: (v: DRep) => void;
 };
-const DRepRow = ({
-  DRep,
 
-  icon,
-  title,
-  subtitle,
-  lastActiveOn,
-  chosenMark,
-  disabled,
+function DRepRow({ DRep, active, onClick, currency }: DRepRowProps) {
+  const explorerView = getDefaultExplorerView(currency);
+  const formatDate = useDateFormatter(dayAndHourFormat);
 
-  onExternalLink,
-  onClick = () => null,
-  style,
-  className,
-}: DRepRowProps) => {
+  const onExternalLink = useCallback(
+    (hex: string) => {
+      const srURL = explorerView && getDRepExplorer(explorerView, hex);
+      if (srURL) openURL(srURL);
+    },
+    [explorerView],
+  );
+
+  const lastActiveOn = (date: string) => formatDate(new Date(date));
+
   const onTitleClick: React.MouseEventHandler<HTMLDivElement> = useCallback(
     e => {
       e.stopPropagation();
@@ -168,22 +177,16 @@ const DRepRow = ({
   }, [onClick, DRep]);
 
   return (
-    <Row
-      className={className}
-      style={style}
-      disabled={disabled}
-      onClick={onRowClick}
-      data-testid="modal-provider-row"
-    >
-      {icon}
+    <StyledRow onClick={onRowClick} data-testid="modal-provider-row">
+      <LedgerDRepIcon dRep={DRep} />
       <NameContainer>
         <Box width={"100%"}>
           <Title>
-            <Text data-testid="modal-provider-title">{title}</Text>
+            <Text data-testid="modal-provider-title">{DRep.meta?.givenName || ""}</Text>
           </Title>
 
           <SubTitle onClick={onTitleClick}>
-            <Text>{subtitle}</Text>
+            <Text>{DRep.hex}</Text>
             <IconContainer>
               <ExternalLink size={16} />
             </IconContainer>
@@ -191,10 +194,13 @@ const DRepRow = ({
         </Box>
       </NameContainer>
       <DateAndTimeContainer>
-        <Text>{lastActiveOn}</Text>
+        <Text>{lastActiveOn(DRep.active)}</Text>
       </DateAndTimeContainer>
-      <SelectedCheckContainer>{chosenMark}</SelectedCheckContainer>
-    </Row>
+      <SelectedCheckContainer>
+        <ChosenMark active={active ?? true} />
+      </SelectedCheckContainer>
+    </StyledRow>
   );
-};
-export default memo<DRepRowProps>(DRepRow);
+}
+
+export default DRepRow;

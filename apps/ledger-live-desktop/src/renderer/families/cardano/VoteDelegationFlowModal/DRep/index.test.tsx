@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent } from "tests/testSetup";
-import DRepField from "./DRepField";
+import DRepField from ".";
 import { DRep } from "@ledgerhq/live-common/families/cardano/DRep";
 import { CardanoAccount, TransactionStatus } from "@ledgerhq/live-common/families/cardano/types";
 
@@ -10,7 +10,7 @@ jest.mock("@ledgerhq/live-common/families/cardano/react", () => ({
 
 import { useCardanoFamilyDReps } from "@ledgerhq/live-common/families/cardano/react";
 
-jest.mock("~/renderer/components/DRep/DRepSearchInput", () => ({
+jest.mock("./components/DREPSearchInput", () => ({
   __esModule: true,
   default: ({ onSearch }: { onSearch: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
     <input data-testid="search-input" onChange={onSearch} />
@@ -36,7 +36,7 @@ jest.mock("../ScrollLoadingList", () => ({
   ),
 }));
 
-jest.mock("./DRepRow", () => ({
+jest.mock("./components/DRepRow", () => ({
   __esModule: true,
   default: ({
     DRep,
@@ -51,7 +51,7 @@ jest.mock("./DRepRow", () => ({
   ),
 }));
 
-jest.mock("~/renderer/components/DRep/DRepListHeader", () => ({
+jest.mock("./components/DREPListHeader", () => ({
   __esModule: true,
   default: () => <div data-testid="drep-list-header" />,
 }));

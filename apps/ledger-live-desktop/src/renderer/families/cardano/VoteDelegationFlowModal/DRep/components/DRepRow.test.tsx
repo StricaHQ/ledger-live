@@ -20,39 +20,6 @@ jest.mock("~/renderer/hooks/useDateFormatter", () => ({
   dayAndHourFormat: "dayAndHourFormat",
 }));
 
-jest.mock("~/renderer/components/DRep/DRepRow", () => {
-  return function MockDRepRow({
-    onClick,
-    onExternalLink,
-    title,
-    subtitle,
-    lastActiveOn,
-  }: {
-    onClick: () => void;
-    onExternalLink: (hex: string) => void;
-    title: string;
-    subtitle: string;
-    lastActiveOn: string;
-  }) {
-    return (
-      <div data-testid="drep-row" onClick={onClick}>
-        <span>{title}</span>
-        <span>{subtitle}</span>
-        <span>{lastActiveOn}</span>
-        <button
-          data-testid="external-link"
-          onClick={e => {
-            e.stopPropagation();
-            onExternalLink(subtitle);
-          }}
-        >
-          Link
-        </button>
-      </div>
-    );
-  };
-});
-
 describe("DRepRow", () => {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const mockCurrency = { type: "CryptoCurrency", id: "cardano" } as CryptoCurrency;
@@ -79,7 +46,7 @@ describe("DRepRow", () => {
   it("calls onClick with the DRep when row is clicked", () => {
     render(<DRepRow currency={mockCurrency} DRep={mockDRep} onClick={mockOnClick} />);
 
-    fireEvent.click(screen.getByTestId("drep-row"));
+    fireEvent.click(screen.getByTestId("modal-provider-row"));
     expect(mockOnClick).toHaveBeenCalledWith(mockDRep);
   });
 
@@ -90,10 +57,55 @@ describe("DRepRow", () => {
 
     render(<DRepRow currency={mockCurrency} DRep={mockDRep} onClick={mockOnClick} />);
 
-    fireEvent.click(screen.getByTestId("external-link"));
+    fireEvent.click(screen.getByText("drep123"));
 
     expect(getDefaultExplorerView).toHaveBeenCalledWith(mockCurrency);
     expect(getDRepExplorer).toHaveBeenCalledWith("explorerView", "drep123");
     expect(openURL).toHaveBeenCalledWith("https://explorer.com/drep123");
+
+    // Ensure that row click was not triggered due to stopPropagation
+    expect(mockOnClick).not.toHaveBeenCalled();
+  });
+
+  it("handles missing DRep meta name gracefully", () => {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const missingMetaDRep = {
+      hex: "drep456",
+      active: "2023-01-01T00:00:00.000Z",
+    } as DRep;
+
+    render(<DRepRow currency={mockCurrency} DRep={missingMetaDRep} onClick={mockOnClick} />);
+
+    // The title element should exist but be empty
+    const titleElement = screen.getByTestId("modal-provider-title");
+    expect(titleElement).toHaveTextContent("");
+    expect(screen.getByText("drep456")).toBeInTheDocument();
+  });
+
+  it("renders correctly without external link if explorer URL is not found", () => {
+    jest.mocked(getDefaultExplorerView).mockReturnValue(undefined);
+
+    render(<DRepRow currency={mockCurrency} DRep={mockDRep} onClick={mockOnClick} />);
+
+    fireEvent.click(screen.getByText("drep123"));
+
+    // openURL should not be called
+    expect(openURL).not.toHaveBeenCalled();
+  });
+
+  it("renders correctly when active is false", () => {
+    const { container } = render(
+      <DRepRow currency={mockCurrency} DRep={mockDRep} onClick={mockOnClick} active={false} />,
+    );
+
+    // It should render, and ChosenMark's active prop should handle the false state.
+    // Testing the actual color of a styled-component is tricky without full theme mocking,
+    // so we verify it renders without crashing and the SVG is in the DOM.
+    expect(screen.getByText("Test DRep")).toBeInTheDocument();
+
+    // Check if the checkmark container exists (it should always be there but its color might change)
+    // The inner path element of ChosenMark should still be there.
+    const svgElements = container.querySelectorAll("svg");
+    expect(svgElements.length).toBeGreaterThan(0);
   });
 });

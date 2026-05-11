@@ -7,10 +7,10 @@ import React, { useCallback, useEffect, useState } from "react";
 import styled from "styled-components";
 import BigSpinner from "~/renderer/components/BigSpinner";
 import Box from "~/renderer/components/Box";
-import DRepSearchInput, { NoResultPlaceholder } from "~/renderer/components/DRep/DRepSearchInput";
+import DRepSearchInput, { NoResultPlaceholder } from "./components/DREPSearchInput";
 import ScrollLoadingList from "../ScrollLoadingList";
-import DRepRow from "./DRepRow";
-import DRepListHeader from "~/renderer/components/DRep/DRepListHeader";
+import DRepRow from "./components/DRepRow";
+import DRepListHeader from "./components/DREPListHeader";
 type Props = {
   account: Account;
   status: TransactionStatus;
@@ -75,7 +75,7 @@ const DRepField = ({ account, onChangeDRep, selectedDRepHex }: Props) => {
   return (
     <>
       {<DRepSearchInput noMargin={true} search={searchQuery} onSearch={onSearch} />}
-      <DRepsFieldContainer>
+      <DRepContainer>
         <Box p={1} data-testid="DRep-list">
           {isSearching || userAndLedgerDRepsLoading || (!DReps.length && !searchQuery) ? (
             <Box flex={1} py={3} alignItems="center" justifyContent="center">
@@ -104,12 +104,12 @@ const DRepField = ({ account, onChangeDRep, selectedDRepHex }: Props) => {
             </Box>
           )}
         </Box>
-      </DRepsFieldContainer>
+      </DRepContainer>
     </>
   );
 };
 
-const DRepsFieldContainer = styled(Box)`
+const DRepContainer = styled(Box)`
   border: 1px solid ${p => p.theme.colors.neutral.c40};
   border-radius: 4px;
 `;

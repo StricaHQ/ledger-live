@@ -8,7 +8,7 @@ import Box from "~/renderer/components/Box";
 import Button from "~/renderer/components/Button";
 import { Transaction as CardanoTransaction } from "@ledgerhq/live-common/families/cardano/types";
 import { DRep } from "@ledgerhq/live-common/families/cardano/DRep";
-import DRepField from "../fields/DRepField";
+import DRepContainer from "../DRep";
 import ErrorBanner from "~/renderer/components/ErrorBanner";
 import AccountFooter from "~/renderer/modals/Send/AccountFooter";
 import TranslatedError from "~/renderer/components/TranslatedError";
@@ -46,7 +46,7 @@ export default function StepDRep({
     <Box flow={1}>
       <TrackPage category="DRep Flow" name="Step DRep" />
       {error && <ErrorBanner error={error} />}
-      <DRepField
+      <DRepContainer
         account={account}
         status={status}
         onChangeDRep={selectDRep}

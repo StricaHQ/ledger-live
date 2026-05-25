@@ -21,7 +21,7 @@ const DRepListHeader = () => {
     <Container>
       <Box width={"60%"} alignItems={"center"}>
         <Text>
-          <Trans i18nKey="cardano.voteDelegation.tableHeader.DRep" />
+          <Trans i18nKey="cardano.voteDelegation.tableHeader.dRep" />
         </Text>
       </Box>
       <Box width={"30%"} alignItems={"left"}>

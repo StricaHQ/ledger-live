@@ -80,12 +80,12 @@ function StepSummary(props: StepProps) {
                     color="neutral.c100"
                     fontSize={4}
                     ml={2}
-                    data-testid="validator-name-label"
+                    data-testid="dRep-name-label"
                   >
                     {transaction.dRepAbstain ? (
-                      <Trans i18nKey="voteDelegation.options.alwaysAbstain" />
+                       <Trans i18nKey="voteDelegation.options.alwaysAbstain" />
                     ) : transaction.dRepNoConfidence ? (
-                      <Trans i18nKey="voteDelegation.options.alwaysNoConfidence" />
+                       <Trans i18nKey="voteDelegation.options.alwaysNoConfidence" />
                     ) : (
                       selectedDRep?.meta?.givenName || ""
                     )}
@@ -96,7 +96,7 @@ function StepSummary(props: StepProps) {
                       color="neutral.c90"
                       fontSize={3}
                       ml={2}
-                      data-testid="validator-name-label"
+                      data-testid="dRep-name-label"
                     >
                       {selectedDRep.hex}
                     </Text>
@@ -198,12 +198,12 @@ export function StepSummaryFooter({ transitionTo, transaction, onClose }: StepPr
             <Trans i18nKey="common.cancel" />
           </Button>
         ) : (
-          <Button mr={1} onClick={() => transitionTo("DRep")}>
+          <Button mr={1} onClick={() => transitionTo("dRep")}>
             <Trans i18nKey="common.back" />
           </Button>
         )}
         <Button
-          id="delegate-continue-button"
+          id="vote-delegate-continue-button"
           disabled={!canNext}
           primary
           onClick={() => transitionTo("connectDevice")}

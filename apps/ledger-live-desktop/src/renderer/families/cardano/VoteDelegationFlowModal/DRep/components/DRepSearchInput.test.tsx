@@ -22,8 +22,8 @@ jest.mock("~/renderer/screens/accounts/AccountList/SearchBox", () => ({
   ),
 }));
 
-describe("DREPSearchInput Component", () => {
-  it("renders correctly with placeholder", () => {
+describe("DRepSearchInput Component", () => {
+  it("renders correctly with a placeholder", () => {
     const mockOnSearch = jest.fn();
     render(<DREPSearchInput onSearch={mockOnSearch} />);
 
@@ -37,12 +37,12 @@ describe("DREPSearchInput Component", () => {
     render(<DREPSearchInput onSearch={mockOnSearch} />);
 
     const searchInput = screen.getByTestId("mock-search-box");
-    fireEvent.change(searchInput, { target: { value: "test DRep" } });
+    fireEvent.change(searchInput, { target: { value: "test dRep" } });
 
-    expect(mockOnSearch).toHaveBeenCalledWith("test DRep");
+    expect(mockOnSearch).toHaveBeenCalledWith("test dRep");
   });
 
-  it("passes search prop correctly", () => {
+  it("passes the search prop correctly", () => {
     const mockOnSearch = jest.fn();
     render(<DREPSearchInput onSearch={mockOnSearch} search="my-search" />);
 
@@ -52,7 +52,7 @@ describe("DREPSearchInput Component", () => {
 });
 
 describe("NoResultPlaceholder Component", () => {
-  it("renders correctly with search text", () => {
+  it("renders correctly with the search text", () => {
     render(<NoResultPlaceholder search="missing-drep" />);
 
     // Checks that the translated string logic attempts to render the text

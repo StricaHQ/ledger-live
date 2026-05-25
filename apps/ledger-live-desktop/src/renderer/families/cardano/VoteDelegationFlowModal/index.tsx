@@ -8,15 +8,15 @@ type State = {
   stepId: StepId;
 };
 const INITIAL_STATE: { stepId: StepId } = {
-  stepId: "DRep",
+  stepId: "dRep",
 };
 
 export type VoteDelegationModalProps = {
   account: CardanoAccount;
-  option: "DRep" | "noConfidence" | "abstain";
+  option: "dRep" | "noConfidence" | "abstain";
 };
 
-class DRepModal extends PureComponent<VoteDelegationModalProps, State> {
+class VoteDelegationModal extends PureComponent<VoteDelegationModalProps, State> {
   state = INITIAL_STATE;
   handleReset = () => {
     return this.setState({
@@ -52,4 +52,4 @@ class DRepModal extends PureComponent<VoteDelegationModalProps, State> {
     );
   }
 }
-export default DRepModal;
+export default VoteDelegationModal;

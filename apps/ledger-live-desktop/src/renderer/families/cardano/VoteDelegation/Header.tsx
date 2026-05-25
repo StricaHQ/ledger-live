@@ -24,7 +24,7 @@ const Header = () => {
   return (
     <Wrapper>
       <Text ff="Inter|SemiBold" color="neutral.c70" fontSize={3}>
-        {t("cardano.voteDelegation.DRep")}
+        {t("cardano.voteDelegation.dRep")}
       </Text>
     </Wrapper>
   );

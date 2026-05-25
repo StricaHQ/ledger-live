@@ -17,7 +17,7 @@ jest.mock("~/renderer/modals/Send/AccountFooter", () => {
 jest.mock("../DRep", () => {
   return function MockDRepField({ onChangeDRep }: { onChangeDRep: (d: { hex: string }) => void }) {
     return (
-      <div data-testid="drep-field">
+      <div data-testid="dRep-field">
         <button onClick={() => onChangeDRep({ hex: "drep1" })}>Select DRep</button>
       </div>
     );
@@ -72,7 +72,7 @@ describe("StepDRepSelection", () => {
     it("renders DRepField and handles selection", () => {
       render(<StepDRep {...mockProps} />);
 
-      expect(screen.getByTestId("drep-field")).toBeInTheDocument();
+      expect(screen.getByTestId("dRep-field")).toBeInTheDocument();
 
       fireEvent.click(screen.getByText("Select DRep"));
 
@@ -80,13 +80,13 @@ describe("StepDRepSelection", () => {
       expect(mockProps.onUpdateTransaction).toHaveBeenCalled();
     });
 
-    it("renders error banner if error prop is present", () => {
+    it("renders the error banner if the error prop is present", () => {
       render(<StepDRep {...mockProps} error={new Error("test error")} />);
 
       expect(screen.getByTestId("error-banner")).toHaveTextContent("test error");
     });
 
-    it("renders alert if amount error is in status", () => {
+    it("renders the alert banner if there is an amount error in the transaction status", () => {
       render(
         <StepDRep
           {...mockProps}
@@ -108,7 +108,7 @@ describe("StepDRepSelection", () => {
       onClose: jest.fn(),
     };
 
-    it("renders continue button enabled when canNext is true", () => {
+    it("renders the continue button as enabled when canNext is true", () => {
       render(<StepDRepFooter {...footerProps} />);
 
       const continueBtn = screen.getByText(/Continue/i).closest("button");
@@ -118,7 +118,7 @@ describe("StepDRepSelection", () => {
       expect(footerProps.transitionTo).toHaveBeenCalledWith("summary");
     });
 
-    it("renders continue button disabled when errors exist", () => {
+    it("renders the continue button as disabled when errors are present", () => {
       render(
         <StepDRepFooter
           {...footerProps}
@@ -131,14 +131,14 @@ describe("StepDRepSelection", () => {
       expect(continueBtn).toBeDisabled();
     });
 
-    it("renders continue button disabled when bridge is pending", () => {
+    it("renders the continue button as disabled when the bridge is pending", () => {
       render(<StepDRepFooter {...footerProps} bridgePending={true} />);
 
       const continueBtn = screen.getByText(/Continue/i).closest("button");
       expect(continueBtn).toBeDisabled();
     });
 
-    it("calls onClose when cancel is clicked", () => {
+    it("calls onClose when the cancel button is clicked", () => {
       render(<StepDRepFooter {...footerProps} />);
 
       fireEvent.click(screen.getByText(/Cancel/i));

@@ -28,14 +28,14 @@ export default function StepDRep({
   const { errors } = status;
   const displayError = errors.amount?.message ? errors.amount : "";
 
-  const selectDRep = (DRep: DRep) => {
-    setSelectedDRepHex(DRep.hex);
-    setSelectedDRep(DRep);
+  const selectDRep = (dRep: DRep) => {
+    setSelectedDRepHex(dRep.hex);
+    setSelectedDRep(dRep);
     onUpdateTransaction((transaction: CardanoTransaction) => {
       const bridge = getAccountBridge(account);
       return bridge.updateTransaction(transaction, {
         mode: "voteDelegate",
-        dRepHex: DRep.hex,
+        dRepHex: dRep.hex,
         dRepNoConfidence: undefined,
         dRepAbstain: undefined,
       });
@@ -44,7 +44,7 @@ export default function StepDRep({
 
   return (
     <Box flow={1}>
-      <TrackPage category="DRep Flow" name="Step DRep" />
+      <TrackPage category="dRep Flow" name="Step dRep" />
       {error && <ErrorBanner error={error} />}
       <DRepContainer
         account={account}
@@ -80,7 +80,7 @@ export function StepDRepFooter({
         <Trans i18nKey="common.cancel" />
       </Button>
       <Button
-        id="delegate-continue-button"
+        id="vote-delegate-continue-button"
         disabled={!canNext}
         primary
         onClick={() => transitionTo("summary")}

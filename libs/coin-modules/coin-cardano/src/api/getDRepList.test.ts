@@ -73,7 +73,7 @@ describe("fetchDRepList", () => {
     });
   });
 
-  it("forwards search, pageNo and limit as query params", async () => {
+  it("forwards search, pageNo, and limit as query parameters", async () => {
     mockNetwork.mockResolvedValueOnce({ data: mockDRepList });
 
     await fetchDRepList(mockMainnetCurrency, "myDRep", 3, 50);
@@ -91,17 +91,5 @@ describe("fetchDRepList", () => {
     const result = await fetchDRepList(mockMainnetCurrency, "", 1, 10);
 
     expect(result).toEqual(mockDRepList);
-  });
-
-  it("returns the response directly when res is the response object", async () => {
-    mockNetwork.mockResolvedValueOnce({ data: mockDRepList });
-
-    const result = await fetchDRepList(mockMainnetCurrency, "search", 2, 5);
-
-    expect(result.pageNo).toBe(1);
-    expect(result.limit).toBe(10);
-    expect(result.count).toBe(1);
-    expect(result.dRepList).toHaveLength(1);
-    expect(result.dRepList[0].hex).toBe("226872101e7daf40ba7bffcef0e1049");
   });
 });

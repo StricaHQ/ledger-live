@@ -2,7 +2,7 @@ import React, { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useDispatch } from "LLD/hooks/redux";
 import { openModal, closeModal } from "~/renderer/actions/modals";
-import VoteDelegationInfoModal from "~/renderer/components/VoteDelegationInfoModal";
+import VoteDelegationInfoModal from "./VoteDelegationInfoModal";
 import { CardanoAccount } from "@ledgerhq/live-common/families/cardano/types";
 
 export type VoteDelegationInfoModalProps = {
@@ -13,7 +13,7 @@ export default function CardanoVoteDelegationInfoModal({ account }: VoteDelegati
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const onNext = useCallback(
-    (option: "DRep" | "noConfidence" | "abstain") => {
+    (option: "dRep" | "noConfidence" | "abstain") => {
       dispatch(closeModal("MODAL_CARDANO_VOTE_DELEGATION_INFO"));
       dispatch(
         openModal("MODAL_CARDANO_VOTE_DELEGATION", {

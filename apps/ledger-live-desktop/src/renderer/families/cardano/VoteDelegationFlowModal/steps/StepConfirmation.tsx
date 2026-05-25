@@ -12,22 +12,22 @@ import SuccessDisplay from "~/renderer/components/SuccessDisplay";
 import { StepProps } from "../types";
 
 const Container = styled(Box).attrs<{
-  shouldSpace?: boolean;
+  $shouldSpace?: boolean;
 }>(() => ({
   alignItems: "center",
   grow: true,
   color: "neutral.c100",
 }))<{
-  shouldSpace?: boolean;
+  $shouldSpace?: boolean;
 }>`
-  justify-content: ${p => (p.shouldSpace ? "space-between" : "center")};
+  justify-content: ${p => (p.$shouldSpace ? "space-between" : "center")};
 `;
 
 function StepConfirmation({ optimisticOperation, error, signed }: StepProps) {
   if (optimisticOperation) {
     return (
       <Container>
-        <TrackPage category="Delegation Cardano" name="Step Confirmed" />
+        <TrackPage category="Vote Delegation Cardano" name="Step Confirmed" />
         <SyncOneAccountOnMount priority={10} accountId={optimisticOperation.accountId} />
         <SuccessDisplay
           title={<Trans i18nKey="cardano.voteDelegation.flow.steps.confirmation.success.title" />}
@@ -40,8 +40,8 @@ function StepConfirmation({ optimisticOperation, error, signed }: StepProps) {
   }
   if (error) {
     return (
-      <Container shouldSpace={signed}>
-        <TrackPage category="Delegation Cardano" name="Step Confirmation Error" />
+      <Container $shouldSpace={signed}>
+        <TrackPage category="Vote Delegation Cardano" name="Step Confirmation Error" />
         {signed ? (
           <BroadcastErrorDisclaimer
             title={

@@ -1,20 +1,20 @@
 import React, { useCallback } from "react";
 import { Trans } from "react-i18next";
 import styled from "styled-components";
-import Check from "../icons/CheckFull";
-import TrackPage from "../analytics/TrackPage";
+import Check from "~/renderer/icons/CheckFull";
+import TrackPage from "~/renderer/analytics/TrackPage";
 import { closeModal } from "~/renderer/actions/modals";
-import Rewards from "../images/rewards.svg";
-import Text from "./Text";
-import Button from "./Button";
-import Box from "./Box";
-import Modal, { ModalBody } from "./Modal";
+import Rewards from "~/renderer/images/rewards.svg";
+import Text from "~/renderer/components/Text";
+import Button from "~/renderer/components/Button";
+import Box from "~/renderer/components/Box";
+import Modal, { ModalBody } from "~/renderer/components/Modal";
 import { useDispatch } from "LLD/hooks/redux";
-import { ModalData } from "../modals/types";
+import { ModalData } from "~/renderer/modals/types";
 
 type Props<Name extends keyof ModalData> = {
   name: Name;
-  onNext: (option: "DRep" | "noConfidence" | "abstain") => void;
+  onNext: (option: "dRep" | "noConfidence" | "abstain") => void;
   nextLabel?: React.ReactNode;
   description: string;
   bullets: string[];
@@ -24,7 +24,7 @@ type Props<Name extends keyof ModalData> = {
   hideFooterButtons?: boolean;
 };
 
-export default function EarnRewardsInfoModal<Name extends keyof ModalData>({
+export default function VoteDelegationInfoModal<Name extends keyof ModalData>({
   name,
   onNext,
   description,
@@ -34,7 +34,7 @@ export default function EarnRewardsInfoModal<Name extends keyof ModalData>({
 }: Props<Name>) {
   const dispatch = useDispatch();
   const onNextFn = useCallback(
-    (option: "DRep" | "noConfidence" | "abstain") => () => {
+    (option: "dRep" | "noConfidence" | "abstain") => () => {
       dispatch(closeModal(name));
       onNext(option);
     },
@@ -51,12 +51,12 @@ export default function EarnRewardsInfoModal<Name extends keyof ModalData>({
           render={() => (
             <Box flow={4} mx={4}>
               <TrackPage
-                category="Delegation Flow"
+                category="Vote Delegation Flow"
                 name="Step Starter"
                 type="modal"
-                flow="stake"
-                action="delegation"
-                page="Earn Rewards Info"
+                flow="vote-delegation"
+                action="vote-delegation"
+                page="Vote Delegation Info"
                 currency={currency}
               />
               <Box flow={1} alignItems="center">
@@ -95,8 +95,8 @@ export default function EarnRewardsInfoModal<Name extends keyof ModalData>({
                   ))}
                 </Box>
                 <Box mt={4} horizontal justifyContent="center" flow={4}>
-                  <Button primary onClick={onNextFn("DRep")}>
-                    <Trans i18nKey="voteDelegation.options.DRep" />
+                  <Button primary onClick={onNextFn("dRep")}>
+                    <Trans i18nKey="voteDelegation.options.dRep" />
                   </Button>
                   <Button primary onClick={onNextFn("noConfidence")}>
                     <Trans i18nKey="voteDelegation.options.alwaysNoConfidence" />

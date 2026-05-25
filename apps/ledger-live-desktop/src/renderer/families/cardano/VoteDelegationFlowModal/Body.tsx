@@ -33,7 +33,7 @@ type OwnProps = {
   onChangeStepId: (a: StepId) => void;
   params: {
     account: CardanoAccount;
-    option?: "DRep" | "noConfidence" | "abstain";
+    option?: "dRep" | "noConfidence" | "abstain";
   };
   name: string;
 };
@@ -50,8 +50,8 @@ type Props = OwnProps & StateProps;
 
 const steps: Array<St> = [
   {
-    id: "DRep",
-    label: <Trans i18nKey="cardano.voteDelegation.flow.steps.DRep.title" />,
+    id: "dRep",
+    label: <Trans i18nKey="cardano.voteDelegation.flow.steps.dRep.title" />,
     component: StepDRep,
     noScroll: true,
     footer: StepDRepFooter,
@@ -62,7 +62,7 @@ const steps: Array<St> = [
     component: StepSummary,
     noScroll: true,
     footer: StepSummaryFooter,
-    onBack: ({ transitionTo }: StepProps) => transitionTo("DRep"),
+    onBack: ({ transitionTo }: StepProps) => transitionTo("dRep"),
   },
   {
     id: "connectDevice",
@@ -153,7 +153,7 @@ const Body = ({
   const handleStepChange = useCallback((e: St) => onChangeStepId(e.id), [onChangeStepId]);
   const handleRetry = useCallback(() => {
     setTransactionError(null);
-    onChangeStepId("DRep");
+    onChangeStepId("dRep");
   }, [onChangeStepId]);
   const handleTransactionError = useCallback((error: Error) => {
     if (!(error instanceof UserRefusedOnDevice)) {
@@ -163,8 +163,8 @@ const Body = ({
   }, []);
 
   React.useEffect(() => {
-    // If not a DRep selection flow, jump directly to summary step
-    if (stepId === "DRep" && params.option && params.option !== "DRep") {
+    // If not a dRep selection flow, jump directly to summary step
+    if (stepId === "dRep" && params.option && params.option !== "dRep") {
       onChangeStepId("summary");
     }
   }, [stepId, params.option, onChangeStepId]);
@@ -192,7 +192,7 @@ const Body = ({
   const activeSteps = React.useMemo(() => {
     if (params.option === "abstain" || params.option === "noConfidence") {
       return steps
-        .filter(s => s.id !== "DRep")
+        .filter(s => s.id !== "dRep")
         .map(s => {
           if (s.id === "summary") {
             return { ...s, onBack: undefined };
@@ -215,7 +215,7 @@ const Body = ({
     steps: activeSteps,
     errorSteps,
     disabledSteps: [],
-    hideBreadcrumb: !!error && ["validator"].includes(stepId),
+    hideBreadcrumb: !!error && ["dRep"].includes(stepId),
     onRetry: handleRetry,
     onStepChange: handleStepChange,
     onClose: handleCloseModal,
@@ -237,7 +237,7 @@ const Body = ({
   return (
     <Stepper {...stepperProps}>
       <SyncSkipUnderPriority priority={100} />
-      <Track onUnmount event="CloseModalDelegation" />
+      <Track onUnmount event="CloseModalVoteDelegation" />
     </Stepper>
   );
 };

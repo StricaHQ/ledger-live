@@ -2770,14 +2770,14 @@
     },
     "voteDelegation": {
       "lastActiveOn": "Last active on",
-      "DRep": "DRep",
+      "dRep": "DRep",
       "changeVoteDelegation": "Change Vote Delegation",
       "stakeKeyRegistrationDeposit": "Stake key registration deposit",
       "delegatingTo": "Delegating to",
       "search": "Search by name or DRep Id...",
       "noDRepFound": "No DRep found for \"<0>{{search}}</0>\".",
       "tableHeader": {
-        "DRep": "DRep",
+        "dRep": "DRep",
         "lastActiveOn": "Last active on"
       },
       "flow": {
@@ -2790,7 +2790,7 @@
               "Shape the future of the Cardano network"
             ]
           },
-          "DRep": {
+          "dRep": {
             "title": "DRep"
           },
           "summary": {
@@ -4485,7 +4485,7 @@
     "delegateVotePower": "Delegate your voting power to a DRep to actively participate in Cardano governance.",
     "button": "Start vote delegation",
     "options": {
-      "DRep": "DRep",
+      "dRep": "DRep",
       "alwaysAbstain": "Always abstain",
       "alwaysNoConfidence": "Always no-confidence"
     }

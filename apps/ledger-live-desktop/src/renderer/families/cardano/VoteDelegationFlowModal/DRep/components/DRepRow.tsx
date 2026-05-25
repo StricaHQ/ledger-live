@@ -11,17 +11,15 @@ import { DRep } from "@ledgerhq/live-common/families/cardano/DRep";
 import { dayAndHourFormat, useDateFormatter } from "~/renderer/hooks/useDateFormatter";
 import LedgerDRepIcon from "../../LedgerDRepIcon";
 
-export const IconContainer = styled.div<{
-  isSR?: boolean;
-}>`
+export const IconContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
   width: 24px;
   height: 24px;
   border-radius: 4px;
-  background-color: ${p => (p.isSR ? p.theme.colors.primary.c10 : p.theme.colors.neutral.c40)};
-  color: ${p => (p.isSR ? p.theme.colors.primary.c80 : p.theme.colors.neutral.c70)};
+  background-color: ${p => p.theme.colors.neutral.c40};
+  color: ${p => p.theme.colors.neutral.c70};
 `;
 
 const NameContainer = styled(Box).attrs(() => ({
@@ -145,19 +143,19 @@ const ChosenMark = styled(Check).attrs<{
 
 export type DRepRowProps = {
   currency: CryptoCurrency;
-  DRep: DRep;
+  dRep: DRep;
   active?: boolean;
   onClick: (v: DRep) => void;
 };
 
-function DRepRow({ DRep, active, onClick, currency }: DRepRowProps) {
+function DRepRow({ dRep, active, onClick, currency }: DRepRowProps) {
   const explorerView = getDefaultExplorerView(currency);
   const formatDate = useDateFormatter(dayAndHourFormat);
 
   const onExternalLink = useCallback(
     (hex: string) => {
-      const srURL = explorerView && getDRepExplorer(explorerView, hex);
-      if (srURL) openURL(srURL);
+      const dRepURL = explorerView && getDRepExplorer(explorerView, hex);
+      if (dRepURL) openURL(dRepURL);
     },
     [explorerView],
   );
@@ -167,26 +165,26 @@ function DRepRow({ DRep, active, onClick, currency }: DRepRowProps) {
   const onTitleClick: React.MouseEventHandler<HTMLDivElement> = useCallback(
     e => {
       e.stopPropagation();
-      onExternalLink(DRep.hex);
+      onExternalLink(dRep.hex);
     },
-    [DRep, onExternalLink],
+    [dRep, onExternalLink],
   );
 
   const onRowClick = useCallback(() => {
-    onClick(DRep);
-  }, [onClick, DRep]);
+    onClick(dRep);
+  }, [onClick, dRep]);
 
   return (
-    <StyledRow onClick={onRowClick} data-testid="modal-provider-row">
-      <LedgerDRepIcon dRep={DRep} />
+    <StyledRow onClick={onRowClick} data-testid="dRep-row">
+      <LedgerDRepIcon dRep={dRep} />
       <NameContainer>
         <Box width={"100%"}>
           <Title>
-            <Text data-testid="modal-provider-title">{DRep.meta?.givenName || ""}</Text>
+            <Text data-testid="dRep-title">{dRep.meta?.givenName || ""}</Text>
           </Title>
 
           <SubTitle onClick={onTitleClick}>
-            <Text>{DRep.hex}</Text>
+            <Text>{dRep.hex}</Text>
             <IconContainer>
               <ExternalLink size={16} />
             </IconContainer>
@@ -194,7 +192,7 @@ function DRepRow({ DRep, active, onClick, currency }: DRepRowProps) {
         </Box>
       </NameContainer>
       <DateAndTimeContainer>
-        <Text>{lastActiveOn(DRep.active)}</Text>
+        <Text>{lastActiveOn(dRep.active)}</Text>
       </DateAndTimeContainer>
       <SelectedCheckContainer>
         <ChosenMark active={active ?? true} />

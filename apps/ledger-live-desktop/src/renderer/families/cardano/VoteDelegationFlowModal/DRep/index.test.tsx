@@ -39,21 +39,21 @@ jest.mock("../ScrollLoadingList", () => ({
 jest.mock("./components/DRepRow", () => ({
   __esModule: true,
   default: ({
-    DRep,
+    dRep,
     onClick,
   }: {
-    DRep: { hex: string };
+    dRep: { hex: string };
     onClick: (drep: { hex: string }) => void;
   }) => (
-    <div data-testid="drep-row" onClick={() => onClick(DRep)}>
-      {DRep.hex}
+    <div data-testid="dRep-row" onClick={() => onClick(dRep)}>
+      {dRep.hex}
     </div>
   ),
 }));
 
 jest.mock("./components/DRepListHeader", () => ({
   __esModule: true,
-  default: () => <div data-testid="drep-list-header" />,
+  default: () => <div data-testid="dRep-list-header" />,
 }));
 
 describe("DRepField", () => {
@@ -69,7 +69,7 @@ describe("DRepField", () => {
 
   it("renders loading state when searching", () => {
     jest.mocked(useCardanoFamilyDReps).mockReturnValue({
-      DReps: [],
+      dReps: [],
       searchQuery: "",
       setSearchQuery: jest.fn(),
       onScrollEndReached: jest.fn(),
@@ -87,14 +87,14 @@ describe("DRepField", () => {
     );
 
     expect(screen.getByTestId("search-input")).toBeInTheDocument();
-    expect(screen.queryByTestId("drep-list-header")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dRep-list-header")).not.toBeInTheDocument();
   });
 
   it("renders DRep list when DReps are available", () => {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const mockDReps = [{ hex: "drep1" }, { hex: "drep2" }] as unknown as DRep[];
+    const mockDReps = [{ hex: "dRep1" }, { hex: "dRep2" }] as unknown as DRep[];
     jest.mocked(useCardanoFamilyDReps).mockReturnValue({
-      DReps: mockDReps,
+      dReps: mockDReps,
       searchQuery: "",
       setSearchQuery: jest.fn(),
       onScrollEndReached: jest.fn(),
@@ -111,16 +111,16 @@ describe("DRepField", () => {
       />,
     );
 
-    expect(screen.getByTestId("drep-list-header")).toBeInTheDocument();
-    expect(screen.getByText("drep1")).toBeInTheDocument();
-    expect(screen.getByText("drep2")).toBeInTheDocument();
+    expect(screen.getByTestId("dRep-list-header")).toBeInTheDocument();
+    expect(screen.getByText("dRep1")).toBeInTheDocument();
+    expect(screen.getByText("dRep2")).toBeInTheDocument();
   });
 
   it("calls setSearchQuery on search input change", async () => {
     const setSearchQueryMock = jest.fn();
     jest.mocked(useCardanoFamilyDReps).mockReturnValue({
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      DReps: [{ hex: "drep1" }] as DRep[],
+      dReps: [{ hex: "dRep1" }] as DRep[],
       searchQuery: "",
       setSearchQuery: setSearchQueryMock,
       onScrollEndReached: jest.fn(),
@@ -142,10 +142,10 @@ describe("DRepField", () => {
   });
 
   it("calls onChangeDRep when a DRep row is clicked", () => {
-    const mockDRep = { hex: "drep1" };
+    const mockDRep = { hex: "dRep1" };
     jest.mocked(useCardanoFamilyDReps).mockReturnValue({
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      DReps: [mockDRep] as DRep[],
+      dReps: [mockDRep] as DRep[],
       searchQuery: "",
       setSearchQuery: jest.fn(),
       onScrollEndReached: jest.fn(),
@@ -162,15 +162,15 @@ describe("DRepField", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("drep1"));
+    fireEvent.click(screen.getByText("dRep1"));
     expect(mockOnChangeDRep).toHaveBeenCalledWith(mockDRep);
   });
 
-  it("puts selectedDRep at first position", () => {
-    const mockDReps = [{ hex: "drep1" }, { hex: "drep2" }];
+  it("puts the selected DRep at the first position", () => {
+    const mockDReps = [{ hex: "dRep1" }, { hex: "dRep2" }];
     jest.mocked(useCardanoFamilyDReps).mockReturnValue({
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      DReps: mockDReps as DRep[],
+      dReps: mockDReps as DRep[],
       searchQuery: "",
       setSearchQuery: jest.fn(),
       onScrollEndReached: jest.fn(),
@@ -187,8 +187,8 @@ describe("DRepField", () => {
       />,
     );
 
-    const rows = screen.getAllByTestId("drep-row");
-    expect(rows[0]).toHaveTextContent("drep2");
-    expect(rows[1]).toHaveTextContent("drep1");
+    const rows = screen.getAllByTestId("dRep-row");
+    expect(rows[0]).toHaveTextContent("dRep2");
+    expect(rows[1]).toHaveTextContent("dRep1");
   });
 });

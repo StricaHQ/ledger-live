@@ -81,12 +81,12 @@ describe("VoteDelegationFlowModal Body", () => {
 
   const mockParams = {
     account: mockAccount,
-    option: "DRep" as const,
+    option: "dRep" as const,
   };
 
   const mockProps = {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    stepId: "DRep" as StepId,
+    stepId: "dRep" as StepId,
     onClose: jest.fn(),
     onChangeStepId: jest.fn(),
     params: mockParams,
@@ -102,10 +102,10 @@ describe("VoteDelegationFlowModal Body", () => {
 
     expect(screen.getByTestId("stepper")).toBeInTheDocument();
     expect(screen.getByTestId("stepper")).toHaveTextContent(/Vote Delegation/i);
-    expect(screen.getByText("DRep")).toBeInTheDocument();
+    expect(screen.getByText("dRep")).toBeInTheDocument();
   });
 
-  it("automatically redirects to summary if option is abstain", () => {
+  it("automatically redirects to the summary step if the option is abstain", () => {
     const onChangeStepIdMock = jest.fn();
     render(
       <Body
@@ -118,23 +118,23 @@ describe("VoteDelegationFlowModal Body", () => {
     expect(onChangeStepIdMock).toHaveBeenCalledWith("summary");
   });
 
-  it("handles operation broadcast", () => {
+  it("handles an operation broadcast", () => {
     render(<Body {...mockProps} />);
     fireEvent.click(screen.getByTestId("broadcast-btn"));
   });
 
-  it("renders with transaction error", () => {
+  it("handles a transaction error", () => {
     render(<Body {...mockProps} />);
     fireEvent.click(screen.getByTestId("error-btn"));
   });
 
-  it("handles retry", () => {
+  it("handles the retry action", () => {
     render(<Body {...mockProps} />);
     fireEvent.click(screen.getByTestId("retry-btn"));
-    expect(mockProps.onChangeStepId).toHaveBeenCalledWith("DRep");
+    expect(mockProps.onChangeStepId).toHaveBeenCalledWith("dRep");
   });
 
-  it("handles close", () => {
+  it("handles the close action", () => {
     render(<Body {...mockProps} />);
     fireEvent.click(screen.getByTestId("close-btn"));
   });

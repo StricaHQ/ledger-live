@@ -9,11 +9,11 @@ jest.mock("~/renderer/actions/modals", () => ({
   closeModal: jest.fn(() => ({ type: "CLOSE_MODAL" })),
 }));
 
-jest.mock("~/renderer/components/VoteDelegationInfoModal", () => ({
+jest.mock("./VoteDelegationInfoModal", () => ({
   __esModule: true,
   default: ({ onNext }: { onNext: (opt: string) => void }) => (
     <div data-testid="info-modal">
-      <button data-testid="next-drep" onClick={() => onNext("DRep")}>
+      <button data-testid="next-drep" onClick={() => onNext("dRep")}>
         Next DRep
       </button>
       <button data-testid="next-abstain" onClick={() => onNext("abstain")}>
@@ -31,7 +31,7 @@ describe("CardanoVoteDelegationInfoModal", () => {
     jest.clearAllMocks();
   });
 
-  it("renders correctly and handles onNext", () => {
+  it("renders correctly and handles the onNext callback", () => {
     render(<CardanoVoteDelegationInfoModal account={mockAccount} />);
     expect(screen.getByTestId("info-modal")).toBeInTheDocument();
 
@@ -40,11 +40,11 @@ describe("CardanoVoteDelegationInfoModal", () => {
     expect(closeModal).toHaveBeenCalledWith("MODAL_CARDANO_VOTE_DELEGATION_INFO");
     expect(openModal).toHaveBeenCalledWith("MODAL_CARDANO_VOTE_DELEGATION", {
       account: mockAccount,
-      option: "DRep",
+      option: "dRep",
     });
   });
 
-  it("handles abstain option", () => {
+  it("handles the selection of the abstain option", () => {
     render(<CardanoVoteDelegationInfoModal account={mockAccount} />);
     fireEvent.click(screen.getByTestId("next-abstain"));
 

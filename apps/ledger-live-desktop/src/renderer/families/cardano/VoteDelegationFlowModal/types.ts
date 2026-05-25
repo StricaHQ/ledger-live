@@ -9,7 +9,7 @@ import {
 } from "@ledgerhq/live-common/families/cardano/types";
 import { DRep } from "@ledgerhq/live-common/families/cardano/DRep";
 
-export type StepId = "DRep" | "summary" | "connectDevice" | "confirmation";
+export type StepId = "dRep" | "summary" | "connectDevice" | "confirmation";
 
 export type StepProps = {
   t: TFunction;

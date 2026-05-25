@@ -65,7 +65,7 @@ const VoteDelegation = ({ account }: Props) => {
           <Box>
             <Button
               primary
-              id={"account-delegate-button"}
+              id={"account-vote-delegate-button"}
               onClick={() => {
                 dispatch(
                   openModal("MODAL_CARDANO_VOTE_DELEGATION_INFO", {

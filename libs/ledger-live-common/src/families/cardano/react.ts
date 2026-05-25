@@ -77,14 +77,14 @@ export function useCardanoFamilyPools(currency: CryptoCurrency): {
 }
 
 export function useCardanoFamilyDReps(currency: CryptoCurrency): {
-  DReps: Array<DRep>;
+  dReps: Array<DRep>;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   onScrollEndReached: () => void;
   isSearching: boolean;
   isPaginating: boolean;
 } {
-  const [DReps, setDReps] = useState([] as Array<DRep>);
+  const [dReps, setDReps] = useState([] as Array<DRep>);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [isPaginating, setIsPaginating] = useState(false);
@@ -134,7 +134,7 @@ export function useCardanoFamilyDReps(currency: CryptoCurrency): {
   };
 
   return {
-    DReps,
+    dReps,
     searchQuery,
     setSearchQuery,
     onScrollEndReached,

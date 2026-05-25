@@ -63,7 +63,7 @@ describe("StepSummary", () => {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const mockDRep = {
     hex: "drep123",
-    meta: { givenName: "Test DRep" },
+    meta: { givenName: "Test dRep" },
     active: "2023-01-01",
   } as DRep;
 
@@ -81,7 +81,7 @@ describe("StepSummary", () => {
   });
 
   describe("StepSummary component", () => {
-    it("returns null if transaction is missing", () => {
+    it("returns null if the transaction is missing", () => {
       const { container } = render(
         <StepSummary
           {
@@ -93,7 +93,7 @@ describe("StepSummary", () => {
       expect(container.firstChild).toBeNull();
     });
 
-    it("renders StepProgress if bridge is pending", () => {
+    it("renders StepProgress if the bridge is pending", () => {
       render(
         <StepSummary
           {
@@ -105,15 +105,15 @@ describe("StepSummary", () => {
       expect(screen.getByTestId("step-progress")).toBeInTheDocument();
     });
 
-    it("renders correctly with DRep name and hex", () => {
+    it("renders correctly with the DRep name and hex", () => {
       render(<StepSummary {...defaultProps} />);
-      expect(screen.getByText("Test DRep")).toBeInTheDocument();
+      expect(screen.getByText("Test dRep")).toBeInTheDocument();
       expect(screen.getByText("drep123")).toBeInTheDocument();
       expect(screen.getByText("Formatted Date")).toBeInTheDocument();
       expect(screen.getByText("10000")).toBeInTheDocument();
     });
 
-    it("renders Abstain option correctly", () => {
+    it("renders the Abstain option correctly", () => {
       render(
         <StepSummary
           {
@@ -131,7 +131,7 @@ describe("StepSummary", () => {
       expect(screen.getByText("Always abstain")).toBeInTheDocument();
     });
 
-    it("renders stake key deposit when account is not yet delegated", () => {
+    it("renders the stake key deposit when the account is not yet delegated", () => {
       render(
         <StepSummary
           {
@@ -151,7 +151,7 @@ describe("StepSummary", () => {
       expect(screen.getByText("2000000")).toBeInTheDocument();
     });
 
-    it("renders fee-too-high warning when present", () => {
+    it("renders the fee-too-high warning when present", () => {
       render(
         <StepSummary
           {
@@ -180,14 +180,14 @@ describe("StepSummary", () => {
       onClose: jest.fn(),
     } as unknown as StepProps;
 
-    it("renders back button for regular DRep delegation", () => {
+    it("renders the back button for a regular DRep delegation", () => {
       render(<StepSummaryFooter {...footerProps} />);
 
       fireEvent.click(screen.getByText(/Back/i).closest("button")!);
-      expect(footerProps.transitionTo).toHaveBeenCalledWith("DRep");
+      expect(footerProps.transitionTo).toHaveBeenCalledWith("dRep");
     });
 
-    it("renders cancel button for direct mode (abstain)", () => {
+    it("renders the cancel button for direct mode (abstain)", () => {
       render(
         <StepSummaryFooter
           {
@@ -205,7 +205,7 @@ describe("StepSummary", () => {
       expect(footerProps.onClose).toHaveBeenCalled();
     });
 
-    it("navigates to connectDevice on continue", () => {
+    it("navigates to the connectDevice step on continue", () => {
       render(<StepSummaryFooter {...footerProps} />);
 
       fireEvent.click(screen.getByText(/Continue/i).closest("button")!);

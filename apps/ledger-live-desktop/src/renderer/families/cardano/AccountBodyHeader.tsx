@@ -1,6 +1,6 @@
 import React from "react";
 import Delegation from "./Delegation";
-import VoteDelegation from "./voteDelegation";
+import VoteDelegation from "./VoteDelegation";
 import { AccountLike } from "@ledgerhq/types-live";
 
 type Props = {

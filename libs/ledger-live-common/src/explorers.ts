@@ -40,5 +40,5 @@ export const getDRepExplorer = (
   explorerView: ExplorerView | undefined,
   hex: string,
 ): string | undefined => {
-  return explorerView?.DRep?.replace("$hex", hex);
+  return explorerView?.dRep?.replace("$hex", hex);
 };

@@ -50,7 +50,8 @@ describe("VoteDelegationDrawer", () => {
         onClose={mockOnClose}
         account={mockAccount}
         ValidatorImage={MockValidatorImage}
-        amount={new BigNumber(1000)}
+        formattedAmount={<Text>1000 ADA</Text>}
+        formattedCounterValue={<Text>$500</Text>}
         data={mockData}
         actions={mockActions}
       />
@@ -66,7 +67,8 @@ describe("VoteDelegationDrawer", () => {
         onClose={mockOnClose}
         account={mockAccount}
         ValidatorImage={MockValidatorImage}
-        amount={new BigNumber(1000)}
+        formattedAmount={<Text>1000 ADA</Text>}
+        formattedCounterValue={<Text>$500</Text>}
         data={mockData}
         actions={mockActions}
       />
@@ -85,7 +87,8 @@ describe("VoteDelegationDrawer", () => {
         onClose={mockOnClose}
         account={mockAccount}
         ValidatorImage={MockValidatorImage}
-        amount={new BigNumber(1000)}
+        formattedAmount={<Text>1000 ADA</Text>}
+        formattedCounterValue={<Text>$500</Text>}
         data={mockData}
         actions={mockActions}
       />

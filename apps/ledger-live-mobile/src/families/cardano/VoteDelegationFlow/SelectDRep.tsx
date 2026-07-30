@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import { View, StyleSheet, FlatList } from "react-native";
-import { useTranslation } from "~/context/Locale";
+import { useTranslation, Trans } from "~/context/Locale";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "@react-navigation/native";
 import { ScreenName } from "~/const";
@@ -9,13 +9,12 @@ import KeyboardView from "~/components/KeyboardView";
 import { StackNavigatorProps } from "~/components/RootNavigator/types/helpers";
 import { SearchInput, Box, InfiniteLoader, Flex, Text } from "@ledgerhq/native-ui";
 import NoResultsFound from "~/icons/NoResultsFound";
-import { Trans } from "react-i18next";
 import { CardanoVoteDelegationFlowParamList } from "./types";
 import { useCardanoFamilyDReps } from "@ledgerhq/live-common/families/cardano/react";
 import { DRep } from "@ledgerhq/live-common/families/cardano/DRep";
 import DRepRow from "./DRepRow";
 import { useAccountScreen } from "LLM/hooks/useAccountScreen";
-import { CryptoCurrency } from "@ledgerhq/types-cryptoassets";
+import { CryptoCurrency } from "@domain/entity-currency-crypto";
 
 type Props = StackNavigatorProps<
   CardanoVoteDelegationFlowParamList,

@@ -20,6 +20,9 @@ import RedelegateIcon from "~/icons/Redelegate";
 import VoteDelegationRow from "./Row";
 import DRepImage from "../VoteDelegationFlow/DRepImage";
 import { useAccountName } from "~/reducers/wallet";
+import { useAccountUnit } from "LLM/hooks/useAccountUnit";
+import CurrencyUnitValue from "~/components/CurrencyUnitValue";
+import CounterValue from "~/components/CounterValue";
 
 type Props = {
   account: CardanoAccount;
@@ -87,6 +90,7 @@ function VoteDelegation({ account }: Props) {
   );
 
   const accountName = useAccountName(account);
+  const unit = useAccountUnit(account);
 
   const data = useMemo<DelegationDrawerProps["data"]>(() => {
     return dRepHex
@@ -157,7 +161,18 @@ function VoteDelegation({ account }: Props) {
             size={size}
           />
         )}
-        amount={account.balance}
+        formattedAmount={
+          <CurrencyUnitValue showCode unit={unit} value={account.balance} />
+        }
+        formattedCounterValue={
+          <CounterValue
+            currency={account.currency}
+            showCode
+            value={account.balance}
+            alwaysShowSign={false}
+            withPlaceholder
+          />
+        }
         data={data}
         actions={actions}
       />

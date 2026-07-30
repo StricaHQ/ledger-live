@@ -1,4 +1,3 @@
-import { BigNumber } from "bignumber.js";
 import React from "react";
 import type { ComponentType } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
@@ -7,7 +6,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getAccountCurrency } from "@ledgerhq/live-common/account/index";
 import { getCurrencyColor } from "@ledgerhq/live-common/currencies/index";
 import type { AccountLike } from "@ledgerhq/types-live";
-// TODO move to component
 import { useTheme } from "@react-navigation/native";
 import DelegatingContainer from "~/families/tezos/DelegatingContainer";
 import { rgba } from "~/colors";
@@ -16,11 +14,8 @@ import QueuedDrawer from "~/components/QueuedDrawer";
 import Circle from "~/components/Circle";
 import Touchable from "~/components/Touchable";
 import LText from "~/components/LText";
-import CurrencyUnitValue from "~/components/CurrencyUnitValue";
-import CounterValue from "~/components/CounterValue";
 import CurrencyIcon from "~/components/CurrencyIcon";
 import { normalize } from "~/helpers/normalizeSize";
-import { useAccountUnit } from "LLM/hooks/useAccountUnit";
 
 const { height } = getWindowDimensions();
 type Props = {
@@ -31,8 +26,8 @@ type Props = {
   ValidatorImage: ComponentType<{
     size: number;
   }>;
-  counterValueDate?: Date;
-  amount: BigNumber;
+  formattedAmount: React.ReactNode;
+  formattedCounterValue?: React.ReactNode;
   data: FieldType[];
   actions: Action[];
   undelegation?: boolean;
@@ -42,9 +37,8 @@ export default function VoteDelegationDrawer({
   onClose,
   account,
   ValidatorImage,
-  counterValueDate,
-  // TODO use formattedAmount & formattedCounterValue instead
-  amount,
+  formattedAmount,
+  formattedCounterValue,
   data,
   actions,
   undelegation,
@@ -52,12 +46,15 @@ export default function VoteDelegationDrawer({
 }: Props) {
   const currency = getAccountCurrency(account);
   const color = getCurrencyColor(currency);
-  const unit = useAccountUnit(account);
   const iconWidth = normalize(64);
   const insets = useSafeAreaInsets();
   const scrollMaxHeight = height - normalize(425) - insets.bottom;
   return (
-    <QueuedDrawer style={styles.modal} isRequestingToBeOpened={isOpen} onClose={onClose}>
+    <QueuedDrawer
+      style={styles.modal}
+      isRequestingToBeOpened={isOpen}
+      onClose={onClose}
+    >
       <View style={styles.root}>
         <DelegatingContainer
           left={
@@ -73,19 +70,14 @@ export default function VoteDelegationDrawer({
 
         <View style={styles.subHeader}>
           <LText semiBold style={[styles.currencyValue]}>
-            <CurrencyUnitValue showCode unit={unit} value={amount} />
+            {formattedAmount}
           </LText>
 
-          <LText semiBold style={styles.counterValue} color="grey">
-            <CounterValue
-              currency={currency}
-              showCode
-              value={amount}
-              alwaysShowSign={false}
-              withPlaceholder
-              date={counterValueDate}
-            />
-          </LText>
+          {formattedCounterValue && (
+            <LText semiBold style={styles.counterValue} color="grey">
+              {formattedCounterValue}
+            </LText>
+          )}
         </View>
 
         <ScrollView
@@ -93,7 +85,11 @@ export default function VoteDelegationDrawer({
           showsVerticalScrollIndicator={true}
         >
           {data.map((field, i) => (
-            <DataField {...field} key={"data-" + i} isLast={i === data.length - 1} />
+            <DataField
+              {...field}
+              key={"data-" + i}
+              isLast={i === data.length - 1}
+            />
           ))}
         </ScrollView>
 
@@ -106,7 +102,11 @@ export default function VoteDelegationDrawer({
           ]}
         >
           {actions.map((props, i) => (
-            <ActionButton key={`actions-${i}`} {...props} isSingle={actions.length === 1} />
+            <ActionButton
+              key={`actions-${i}`}
+              {...props}
+              isSingle={actions.length === 1}
+            />
           ))}
         </View>
       </View>
@@ -135,7 +135,12 @@ function DataField({ label, Component, isLast }: DataFieldProps) {
       ]}
     >
       <View>
-        <LText numberOfLines={1} semiBold style={styles.labelText} color="smoke">
+        <LText
+          numberOfLines={1}
+          semiBold
+          style={styles.labelText}
+          color="smoke"
+        >
           {label}
         </LText>
       </View>
@@ -178,7 +183,11 @@ function ActionButton({
       onPress={onPress}
     >
       <Icon size={48} style={styles.actionIcon} />
-      <LText semiBold style={[styles.actionText]} color={disabled ? "grey" : "darkBlue"}>
+      <LText
+        semiBold
+        style={[styles.actionText]}
+        color={disabled ? "grey" : "darkBlue"}
+      >
         {label}
       </LText>
     </Touchable>

@@ -5,8 +5,10 @@ import Touchable from "~/components/Touchable";
 import DRepImage from "./DRepImage";
 import type { DRep } from "@ledgerhq/live-common/families/cardano/DRep";
 import { useFormatDate } from "~/hooks/useDateFormatter";
+import { useTranslation } from "~/context/Locale";
 
 const DRepRow = ({ onPress, drep }: { onPress: (v: DRep) => void; drep: DRep }) => {
+  const { t } = useTranslation();
   const onPressT = useCallback(() => {
     onPress(drep);
   }, [drep, onPress]);
@@ -24,7 +26,7 @@ const DRepRow = ({ onPress, drep }: { onPress: (v: DRep) => void; drep: DRep }) 
           </Text>
         </View>
         <Text variant={"paragraph"} fontWeight={"medium"} color={"neutral.c70"}>
-          {`Last Active: ${lastActiveOn}`}
+          {t("cardano.voteDelegation.lastActiveOn")}: {lastActiveOn}
         </Text>
       </View>
     </Touchable>

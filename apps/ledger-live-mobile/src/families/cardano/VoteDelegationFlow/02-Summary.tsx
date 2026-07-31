@@ -3,7 +3,8 @@ import { BigNumber } from "bignumber.js";
 import invariant from "invariant";
 import React, { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "~/context/Locale";
-import { Animated, SafeAreaView, StyleSheet, View } from "react-native";
+import { Animated, StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { getAccountCurrency } from "@ledgerhq/live-common/account/index";
 import { useAccountBridge } from "@ledgerhq/live-common/bridge/useAccountBridge";
 import useBridgeTransaction from "@ledgerhq/live-common/bridge/useBridgeTransaction";
@@ -37,9 +38,9 @@ import { useAccountUnit } from "LLM/hooks/useAccountUnit";
 import GenericErrorBottomModal from "~/components/GenericErrorBottomModal";
 import RetryButton from "~/components/RetryButton";
 import CancelButton from "~/components/CancelButton";
-import Config from "react-native-config";
 import SupportLinkError from "~/components/SupportLinkError";
 import { useAccountScreen } from "LLM/hooks/useAccountScreen";
+import { useChangeValidatorRotateAnim } from "../../shared/useChangeValidatorRotateAnim";
 
 type Props = StackNavigatorProps<
   CardanoVoteDelegationFlowParamList,
@@ -354,7 +355,7 @@ function SummaryWords({
   const unit = useAccountUnit(account);
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const [rotateAnim] = useState(() => new Animated.Value(0));
+  const { rotate } = useChangeValidatorRotateAnim();
 
   const optionText = useMemo(() => {
     if (option === "abstain") return t("cardano.voteDelegation.options.alwaysAbstain");
@@ -366,41 +367,6 @@ function SummaryWords({
     }
     return t("cardano.delegation.select");
   }, [option, chosenDRep, t]);
-
-
-
-  useEffect(() => {
-    if (!Config.DETOX) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(rotateAnim, {
-            toValue: 1,
-            duration: 200,
-            useNativeDriver: true,
-          }),
-          Animated.timing(rotateAnim, {
-            toValue: -1,
-            duration: 300,
-            useNativeDriver: true,
-          }),
-          Animated.timing(rotateAnim, {
-            toValue: 0,
-            duration: 200,
-            useNativeDriver: true,
-          }),
-          Animated.delay(1000),
-        ]),
-      ).start();
-    }
-    return () => {
-      rotateAnim.setValue(0);
-    };
-  }, [rotateAnim]);
-
-  const rotate = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "30deg"],
-  });
 
   const formatConfig = {
     disableRounding: true,

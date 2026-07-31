@@ -35,18 +35,15 @@ const getMainActions = ({
     },
   ];
 
-  const isAlreadyVoteDelegated = !!account.cardanoResources?.delegation?.dRepHex;
   const voteNavigationParams: NavigationParamsType = [
     NavigatorName.CardanoVoteDelegationFlow,
     {
-      screen: isAlreadyVoteDelegated
-        ? ScreenName.CardanoVoteDelegationSummary
-        : ScreenName.CardanoVoteDelegationStarted,
+      screen: ScreenName.CardanoVoteDelegationStarted,
       params: {
         accountId: account.id,
         parentId: parentAccount ? parentAccount.id : undefined,
         source: parentRoute,
-        skipStartedStep: isAlreadyVoteDelegated,
+        skipStartedStep: false,
       },
     },
   ];

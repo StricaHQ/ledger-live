@@ -38,6 +38,7 @@ export class CardanoInvalidPoolId extends Error {
     if (fields) Object.assign(this, fields);
   }
 }
+
 export class CardanoInvalidDRepHex extends Error {
   override name = "CardanoInvalidDRepHex";
   constructor(message?: string, fields?: Record<string, unknown>) {

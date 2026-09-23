@@ -11,7 +11,7 @@ describe("VoteDelegationRow", () => {
 
     render(
       <VoteDelegationRow
-        dRepHex={dRepHex}
+        delegation={{ dRepHex, status: "delegated" } as any}
         currencyId="cardano"
         onPress={mockOnPress}
         isLast={false}

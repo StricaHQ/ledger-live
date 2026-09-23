@@ -105,12 +105,23 @@ describe("StepSummary", () => {
       expect(screen.getByTestId("step-progress")).toBeInTheDocument();
     });
 
-    it("renders correctly with the DRep name and hex", () => {
+    it("renders correctly with the DRep name", () => {
       render(<StepSummary {...defaultProps} />);
       expect(screen.getByText("Test dRep")).toBeInTheDocument();
-      expect(screen.getByText(mockDRepBech32)).toBeInTheDocument();
       expect(screen.getByText("Formatted Date")).toBeInTheDocument();
       expect(screen.getByText("10000")).toBeInTheDocument();
+    });
+
+    it("renders correctly with the DRep hex if name is missing", () => {
+      const dRepWithoutName = { ...mockDRep, meta: undefined };
+      render(
+        <StepSummary
+          {...defaultProps}
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          selectedDRep={dRepWithoutName as DRep}
+        />,
+      );
+      expect(screen.getByText(mockDRepBech32)).toBeInTheDocument();
     });
 
     it("renders the Abstain option correctly", () => {

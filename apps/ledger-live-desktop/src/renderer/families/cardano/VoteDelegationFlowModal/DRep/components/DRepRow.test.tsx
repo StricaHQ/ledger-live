@@ -78,9 +78,8 @@ describe("DRepRow", () => {
 
     render(<DRepRow currency={mockCurrency} dRep={missingMetaDRep} onClick={mockOnClick} />);
 
-    // The title element should exist but be empty
-    const titleElement = screen.getByTestId("dRep-title");
-    expect(titleElement).toHaveTextContent("");
+    // The title element should not be rendered
+    expect(screen.queryByTestId("dRep-title")).not.toBeInTheDocument();
     expect(
       screen.getByText("drep142aueh0wluqpzg3ng32kvaugnx4thnxaamlsqyfzxdz92enhz3yuqq"),
     ).toBeInTheDocument();

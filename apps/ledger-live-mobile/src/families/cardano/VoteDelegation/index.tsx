@@ -96,9 +96,9 @@ function VoteDelegation({ account }: Props) {
   const dRepAvatarLabel = useMemo(
     () =>
       dRepHex && dRepHex !== "2" && dRepHex !== "3"
-        ? getBech32DRepId(dRepHex, account.currency.id)
+        ? (d?.dRepName || getBech32DRepId(dRepHex, account.currency.id))
         : dRepHex,
-    [dRepHex, account.currency.id],
+    [dRepHex, account.currency.id, d?.dRepName],
   );
 
   const data = useMemo<DelegationDrawerProps["data"]>(() => {
@@ -119,7 +119,7 @@ function VoteDelegation({ account }: Props) {
                     ? t("cardano.voteDelegation.options.alwaysAbstain")
                     : dRepHex === "3"
                     ? t("cardano.voteDelegation.options.alwaysNoConfidence")
-                    : getBech32DRepId(dRepHex, account.currency.id)}
+                    : (d?.dRepName || getBech32DRepId(dRepHex, account.currency.id))}
                 </LText>
               </Touchable>
             ),
@@ -190,8 +190,8 @@ function VoteDelegation({ account }: Props) {
         <View style={styles.wrapper}>
           <AccountSectionLabel name={t("cardano.voteDelegation.header")} />
           <View key={d.dRepHex} style={[styles.delegationsWrapper]}>
-            <VoteDelegationRow
-              dRepHex={d.dRepHex}
+              <VoteDelegationRow
+              delegation={d}
               currencyId={account.currency.id}
               onPress={setDRepHex}
               isLast={true}

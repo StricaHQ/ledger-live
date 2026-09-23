@@ -47,7 +47,6 @@ const NameContainer = styled(Box).attrs(() => ({
 const Title = styled(Box).attrs(() => ({
   horizontal: true,
   alignItems: "center",
-  py: 1,
 }))`
   width: min-content;
   max-width: 95%;
@@ -68,6 +67,7 @@ const SubTitle = styled(Box).attrs(() => ({
   horizontal: true,
   alignItems: "center",
 }))`
+  margin-top: -4px;
   font-size: 12px;
   font-weight: 500;
   color: ${p => p.theme.colors.neutral.c80};
@@ -184,9 +184,11 @@ function DRepRow({ dRep, active, onClick, currency }: DRepRowProps) {
       <LedgerDRepIcon dRep={dRep} bech32DRepId={bech32DRepId} />
       <NameContainer>
         <Box width={"100%"}>
-          <Title>
-            <Text data-testid="dRep-title">{dRep.meta?.givenName || ""}</Text>
-          </Title>
+          {dRep.meta?.givenName ? (
+            <Title>
+              <Text data-testid="dRep-title">{dRep.meta.givenName}</Text>
+            </Title>
+          ) : null}
 
           <SubTitle onClick={onTitleClick}>
             <Text>{bech32DRepId}</Text>

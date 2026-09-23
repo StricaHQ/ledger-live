@@ -125,11 +125,11 @@ const RewardImg = styled.img.attrs(() => ({
   width: 130px;
   height: auto;
 `;
-const Row = styled(Box).attrs(p => ({
+const Row = styled(Box).attrs((p) => ({
   horizontal: true,
   justifyContent: "flex-start",
   alignItems: "center",
-  color: p.theme.colors.greenPill,
+  color: p.theme.colors.neutral.c100,
 }))`
   margin-bottom: 6px;
   & > :first-child {

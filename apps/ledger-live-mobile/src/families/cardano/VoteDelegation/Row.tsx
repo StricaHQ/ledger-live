@@ -8,23 +8,41 @@ import ArrowRight from "~/icons/ArrowRight";
 import LText from "~/components/LText";
 import { getBech32DRepId } from "@ledgerhq/live-common/families/cardano/logic";
 
+import { CardanoDelegation } from "@ledgerhq/live-common/families/cardano/types";
+
 type Props = {
-  dRepHex: string;
+  delegation: CardanoDelegation;
   currencyId: string;
   onPress: (dRepHex: string) => void;
   isLast?: boolean;
 };
 
 export default function VoteDelegationRow({
-  dRepHex,
+  delegation,
   currencyId,
   onPress,
   isLast = false,
 }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation();
+
+  let name = "";
+  if (delegation && delegation.dRepHex) {
+    if (delegation.dRepName) {
+      name = delegation.dRepName;
+    } else if (delegation.dRepHex === "2") {
+      name = t("cardano.voteDelegation.options.alwaysAbstain");
+    } else if (delegation.dRepHex === "3") {
+      name = t("cardano.voteDelegation.options.alwaysNoConfidence");
+    } else {
+      name = getBech32DRepId(delegation.dRepHex, currencyId);
+    }
+  }
+
   const avatarLabel =
-    dRepHex === "2" || dRepHex === "3" ? dRepHex : getBech32DRepId(dRepHex, currencyId);
+    delegation.dRepName || (delegation.dRepHex === "2" || delegation.dRepHex === "3"
+      ? delegation.dRepHex
+      : getBech32DRepId(delegation.dRepHex || "", currencyId));
 
   return (
     <TouchableOpacity
@@ -33,7 +51,7 @@ export default function VoteDelegationRow({
         styles.wrapper,
         !isLast ? { ...styles.borderBottom, borderBottomColor: colors.lightGrey } : undefined,
       ]}
-      onPress={() => onPress(dRepHex)}
+      onPress={() => delegation.dRepHex && onPress(delegation.dRepHex)}
     >
       <View style={[styles.icon]}>
         <DRepImage size={42} name={avatarLabel} />
@@ -41,11 +59,7 @@ export default function VoteDelegationRow({
 
       <View style={styles.nameWrapper}>
         <Text variant={"body"} fontWeight={"semiBold"} numberOfLines={1}>
-          {dRepHex === "2"
-            ? t("cardano.voteDelegation.options.alwaysAbstain")
-            : dRepHex === "3"
-            ? t("cardano.voteDelegation.options.alwaysNoConfidence")
-            : avatarLabel}
+          {name}
         </Text>
 
         <View style={styles.row}>
@@ -55,7 +69,6 @@ export default function VoteDelegationRow({
           <ArrowRight color={colors.live} size={14} />
         </View>
       </View>
-
     </TouchableOpacity>
   );
 }

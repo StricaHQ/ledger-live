@@ -1,6 +1,9 @@
 import React from "react";
 import styled from "styled-components";
-import { CardanoAccount, CardanoDelegation } from "@ledgerhq/live-common/families/cardano/types";
+import {
+  CardanoAccount,
+  CardanoDelegation,
+} from "@ledgerhq/live-common/families/cardano/types";
 import { getBech32DRepId } from "@ledgerhq/live-common/families/cardano/logic";
 import { useTranslation } from "react-i18next";
 import Text from "~/renderer/components/Text";
@@ -43,8 +46,11 @@ const Value = styled.div`
 const Row = ({ account, delegation }: Props) => {
   const { t } = useTranslation();
   let name = "";
+
   if (delegation && delegation.dRepHex) {
-    if (delegation.dRepHex === "2") {
+    if (delegation.dRepName) {
+      name = delegation.dRepName;
+    } else if (delegation.dRepHex === "2") {
       name = t("voteDelegation.options.alwaysAbstain");
     } else if (delegation.dRepHex === "3") {
       name = t("voteDelegation.options.alwaysNoConfidence");
@@ -55,7 +61,7 @@ const Row = ({ account, delegation }: Props) => {
   return (
     <Wrapper>
       <Value>
-        <Ellipsis fontSize={3} color="neutral.c80">
+        <Ellipsis fontSize={3} color="neutral.c70">
           <Text ff="Inter|SemiBold">{name}</Text>
         </Ellipsis>
       </Value>

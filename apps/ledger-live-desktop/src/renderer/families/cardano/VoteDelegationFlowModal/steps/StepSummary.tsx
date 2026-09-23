@@ -2,6 +2,7 @@ import React from "react";
 import { Trans } from "react-i18next";
 import styled from "styled-components";
 import { getAccountCurrency } from "@ledgerhq/live-common/account/index";
+import { getBech32DRepId } from "@ledgerhq/live-common/families/cardano/logic";
 import Box from "~/renderer/components/Box";
 import Button from "~/renderer/components/Button";
 import FormattedVal from "~/renderer/components/FormattedVal";
@@ -93,9 +94,16 @@ function StepSummary(props: StepProps) {
                       color="neutral.c90"
                       fontSize={3}
                       ml={2}
-                      data-testid="dRep-name-label"
+                      data-testid="dRep-id-label"
+                      style={{
+                        maxWidth: "100%",
+                        overflow: "visible",
+                        textOverflow: "clip",
+                        whiteSpace: "normal",
+                        wordBreak: "break-all",
+                      }}
                     >
-                      {selectedDRep.hex}
+                      {getBech32DRepId(selectedDRep.hex, account.currency.id)}
                     </Text>
                   )}
                 </DRepNameAndHexContainer>

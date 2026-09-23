@@ -1,6 +1,7 @@
 import { getDefaultExplorerView, getDRepExplorer } from "@ledgerhq/live-common/explorers";
+import { getBech32DRepId } from "@ledgerhq/live-common/families/cardano/logic";
 import { CryptoCurrency } from "@domain/entity-currency-crypto";
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import styled, { css } from "styled-components";
 import Box from "~/renderer/components/Box";
 import Text from "~/renderer/components/Text";
@@ -151,6 +152,10 @@ export type DRepRowProps = {
 function DRepRow({ dRep, active, onClick, currency }: DRepRowProps) {
   const explorerView = getDefaultExplorerView(currency);
   const formatDate = useDateFormatter(dayAndHourFormat);
+  const bech32DRepId = useMemo(
+    () => getBech32DRepId(dRep.hex, currency.id),
+    [dRep.hex, currency.id],
+  );
 
   const onExternalLink = useCallback(
     (hex: string) => {
@@ -176,7 +181,7 @@ function DRepRow({ dRep, active, onClick, currency }: DRepRowProps) {
 
   return (
     <StyledRow onClick={onRowClick} data-testid="dRep-row">
-      <LedgerDRepIcon dRep={dRep} />
+      <LedgerDRepIcon dRep={dRep} bech32DRepId={bech32DRepId} />
       <NameContainer>
         <Box width={"100%"}>
           <Title>
@@ -184,7 +189,7 @@ function DRepRow({ dRep, active, onClick, currency }: DRepRowProps) {
           </Title>
 
           <SubTitle onClick={onTitleClick}>
-            <Text>{dRep.hex}</Text>
+            <Text>{bech32DRepId}</Text>
             <IconContainer>
               <ExternalLink size={16} />
             </IconContainer>

@@ -1,6 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import { CardanoAccount, CardanoDelegation } from "@ledgerhq/live-common/families/cardano/types";
+import { getBech32DRepId } from "@ledgerhq/live-common/families/cardano/logic";
 import { useTranslation } from "react-i18next";
 import Text from "~/renderer/components/Text";
 import Ellipsis from "~/renderer/components/Ellipsis";
@@ -48,7 +49,7 @@ const Row = ({ account, delegation }: Props) => {
     } else if (delegation.dRepHex === "3") {
       name = t("voteDelegation.options.alwaysNoConfidence");
     } else {
-      name = delegation.dRepHex;
+      name = getBech32DRepId(delegation.dRepHex, account.currency.id);
     }
   }
   return (

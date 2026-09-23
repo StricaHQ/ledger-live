@@ -57,9 +57,12 @@ describe("StepSummary", () => {
     warnings: {},
   } as TransactionStatus;
 
+  const mockDRepHex = "11223344556677889900aabbccddeeff00112233445566778899aabb";
+  const mockDRepBech32 = "drep1zy3rx3z4vemc3xgq42aueh0wluqpzg3ng32kvaugnx4tkttkftx";
+
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const mockDRep = {
-    hex: "drep123",
+    hex: mockDRepHex,
     meta: { givenName: "Test dRep" },
     active: "2023-01-01",
   } as DRep;
@@ -105,7 +108,7 @@ describe("StepSummary", () => {
     it("renders correctly with the DRep name and hex", () => {
       render(<StepSummary {...defaultProps} />);
       expect(screen.getByText("Test dRep")).toBeInTheDocument();
-      expect(screen.getByText("drep123")).toBeInTheDocument();
+      expect(screen.getByText(mockDRepBech32)).toBeInTheDocument();
       expect(screen.getByText("Formatted Date")).toBeInTheDocument();
       expect(screen.getByText("10000")).toBeInTheDocument();
     });

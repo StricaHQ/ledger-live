@@ -53,18 +53,21 @@ describe("CardanoVoteDelegation", () => {
     });
   });
 
+  const dRepHex = "11223344556677889900aabbccddeeff00112233445566778899aabb";
+  const dRepBech32 = "drep1zy3rx3z4vemc3xgq42aueh0wluqpzg3ng32kvaugnx4tkttkftx";
+
   it("should render populated state when delegated", () => {
     const delegatedAccount = {
       ...mockAccount,
       cardanoResources: {
         delegation: {
-          dRepHex: "drep_hex_123",
+          dRepHex,
         },
       },
     };
     render(<CardanoVoteDelegation account={delegatedAccount} />);
     expect(screen.getByText("Vote Delegation")).toBeDefined();
-    expect(screen.getByText("drep_hex_123")).toBeDefined(); // DRep row should render
+    expect(screen.getByText(dRepBech32)).toBeDefined(); // DRep row should render
   });
 
   it("should open drawer when DRep row is pressed", () => {
@@ -72,18 +75,18 @@ describe("CardanoVoteDelegation", () => {
       ...mockAccount,
       cardanoResources: {
         delegation: {
-          dRepHex: "drep_hex_123",
+          dRepHex,
         },
       },
     };
     render(<CardanoVoteDelegation account={delegatedAccount} />);
-    
+
     // Press the row to set dRepHex in state
-    const row = screen.getByText("drep_hex_123");
+    const row = screen.getByText(dRepBech32);
     fireEvent.press(row);
 
     // The drawer should now be open, displaying the dRepHex
-    const drawerTitle = screen.getAllByText("drep_hex_123");
+    const drawerTitle = screen.getAllByText(dRepBech32);
     expect(drawerTitle.length).toBeGreaterThan(0);
   });
 });

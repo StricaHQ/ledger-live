@@ -6,16 +6,25 @@ import { Text } from "@ledgerhq/native-ui";
 import DRepImage from "../VoteDelegationFlow/DRepImage";
 import ArrowRight from "~/icons/ArrowRight";
 import LText from "~/components/LText";
+import { getBech32DRepId } from "@ledgerhq/live-common/families/cardano/logic";
 
 type Props = {
   dRepHex: string;
+  currencyId: string;
   onPress: (dRepHex: string) => void;
   isLast?: boolean;
 };
 
-export default function VoteDelegationRow({ dRepHex, onPress, isLast = false }: Props) {
+export default function VoteDelegationRow({
+  dRepHex,
+  currencyId,
+  onPress,
+  isLast = false,
+}: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const avatarLabel =
+    dRepHex === "2" || dRepHex === "3" ? dRepHex : getBech32DRepId(dRepHex, currencyId);
 
   return (
     <TouchableOpacity
@@ -27,7 +36,7 @@ export default function VoteDelegationRow({ dRepHex, onPress, isLast = false }: 
       onPress={() => onPress(dRepHex)}
     >
       <View style={[styles.icon]}>
-        <DRepImage size={42} name={dRepHex} />
+        <DRepImage size={42} name={avatarLabel} />
       </View>
 
       <View style={styles.nameWrapper}>
@@ -36,7 +45,7 @@ export default function VoteDelegationRow({ dRepHex, onPress, isLast = false }: 
             ? t("cardano.voteDelegation.options.alwaysAbstain")
             : dRepHex === "3"
             ? t("cardano.voteDelegation.options.alwaysNoConfidence")
-            : dRepHex}
+            : avatarLabel}
         </Text>
 
         <View style={styles.row}>
